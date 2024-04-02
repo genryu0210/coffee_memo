@@ -47,7 +47,7 @@ class _InsertScreenState extends State<InsertScreen> {
           child: Wrap(
             children: <Widget>[
               ListTile(
-                  leading: Icon(Icons.photo_camera),
+                  leading: Icon(Icons.photo_camera), 
                   title: Text('カメラで撮影'),
                   onTap: () {
                     Navigator.of(context).pop();
