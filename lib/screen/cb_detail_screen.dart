@@ -133,7 +133,7 @@ class _DetailScreenState extends State<DetailScreen> {
                   onPressed: () async {
                     await Navigator.of(context).push(
                       MaterialPageRoute(
-                          builder: (context) => EditScreen(item: itemDetails!)),
+                          builder: (context) => EditScreen(itemId: itemDetails!["id"])),
                     );
                     _refreshItem();
                   },

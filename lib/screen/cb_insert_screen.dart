@@ -151,7 +151,7 @@ class _InsertScreenState extends State<InsertScreen> {
             Row(
               children: [
                 Padding(
-                  padding: EdgeInsets.only(right: 8.0),
+                  padding: EdgeInsets.only(right: 16.0),
                   child: beansImage(_storedImage),
                 ),
                 Expanded(

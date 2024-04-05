@@ -6,9 +6,9 @@ import 'package:image_picker/image_picker.dart';
 import '../utils.dart';
 
 class EditScreen extends StatefulWidget {
-  late Map<String, dynamic> item;
+  final int itemId;
 
-  EditScreen({required this.item});
+  EditScreen({required this.itemId});
 
   @override
   _EditScreenState createState() => _EditScreenState();
@@ -18,7 +18,8 @@ class _EditScreenState extends State<EditScreen> {
   final table = 'CoffeeBeansTable';
   final dbHelper = DatabaseHelper.instance;
   File? _selectedImage;
-  late Map<String, Map> _controllers;
+  Map<String, dynamic>? itemDetails;
+  Map<String, Map>? _controllers;
   final japaneseTitles = Utils().japaneseTitles;
 
   @override
@@ -27,18 +28,28 @@ class _EditScreenState extends State<EditScreen> {
     _initControllers();
   }
 
-  void _initControllers() {
-    _controllers = { for (var item in dbHelper.coffeebeansColumns) item : {
-        'controller': TextEditingController(
-            text:
-                widget.item[item] != null ? widget.item[item].toString() : ''),
-        'JapaneseTitle':  japaneseTitles[item] ?? item,
-      } };
+  void _initControllers() async{
+    final data = await dbHelper.queryItemById(table, widget.itemId);
+    setState(await () {
+      itemDetails = data;
+      _selectedImage = itemDetails!['imagePath'] != null
+      ? File(itemDetails!['imagePath'])
+      :null;
+    });
+    _controllers = {
+      for (var item in dbHelper.coffeebeansColumns)
+        item: {
+          'controller': TextEditingController(
+              text: itemDetails?[item] != null
+                  ? itemDetails![item].toString()
+                  : ''),
+        }
+    };
   }
 
   @override
   void dispose() {
-    _controllers.forEach((key, value) {
+    _controllers!.forEach((key, value) {
       value['controller'].dispose();
     });
     super.dispose();
@@ -85,14 +96,15 @@ class _EditScreenState extends State<EditScreen> {
   }
 
   void _updateItem() async {
-    final imagePath =
-        _selectedImage != null ? _selectedImage!.path : widget.item['imagePath'];
+    final imagePath = _selectedImage != null
+        ? _selectedImage!.path
+        : itemDetails!['imagePath'];
 
     Map<String, dynamic> row = {
-      'id': widget.item['id'],
+      'id': itemDetails!['id'],
       // 'imagePath': imagePath,
     };
-    _controllers.forEach((key, value) {
+    _controllers!.forEach((key, value) {
       row[key] = value['controller'].text; // 各フィールドの値をマップに追加
     });
     row['imagePath'] = imagePath;
@@ -100,63 +112,134 @@ class _EditScreenState extends State<EditScreen> {
     Navigator.of(context).pop(); // 更新後に画面を閉じる
   }
 
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        title: Text('編集'),
-      ),
-      body: SingleChildScrollView(
-        padding: EdgeInsets.all(16.0),
-        child: Column(
-          children: _buildFields(),
+
+  Widget beansImage(_selectedImage) {
+    Image imageFile;
+
+    imageFile = itemDetails!['imagePath'] != null
+        ? Image.file(
+            _selectedImage!,
+            width: 150,
+            height: 150,
+            fit: BoxFit.cover,
+          )
+        : Image.asset(
+            'assets/placeholder.jpg', // プレースホルダー画像へのパス
+            width: 150,
+            height: 150,
+            fit: BoxFit.cover,
+          );
+    return InkWell(
+      onTap: _selectImage,
+      child: Container(
+        decoration: BoxDecoration(
+          borderRadius: BorderRadius.circular(30),
+          border: Border.all(width: 1.0),
         ),
+        child: ClipRRect(
+            borderRadius: BorderRadius.circular(30), child: imageFile),
       ),
     );
   }
 
-  List<Widget> _buildFields() {
-    List<Widget> fields = [];
+  Widget customTextField(String key, double value) {
+    return SizedBox(
+      width: value,
+      child: TextField(
+        controller: _controllers![key]!['controller'],
+        decoration:
+            InputDecoration(labelText: japaneseTitles[key]),
+      ),
+    );
+  }
 
-    _controllers.forEach((key, value) {
-      if(key != "id"){
-      fields.add(TextField(
-        controller: value['controller'],
-        decoration: InputDecoration(labelText: value['JapaneseTitle']),
-      ));
-      // fields.add(SizedBox(height: 8));
-  }});
 
-    // 画像表示の条件分岐
-    if (_selectedImage != null) {
-      fields.add(Image.file(
-        _selectedImage!,
-        width: 250,
-        height: 250,
-        fit: BoxFit.cover,
-      ));
-    } else if (widget.item['imagePath'] != null &&
-        widget.item['imagePath'].isNotEmpty) {
-      fields.add(Image.file(
-        File(widget.item['imagePath']),
-        width: 250,
-        height: 250,
-        fit: BoxFit.cover,
-      ));
-    } else {
-      fields.add(Image.asset('assets/placeholder.jpg'));
+  @override
+  Widget build(BuildContext context) {
+    double screenWidth = MediaQuery.of(context).size.width;
+    if(_controllers == null) {
+      return Center(child: CircularProgressIndicator());
     }
-
-    fields.add(ElevatedButton(
-      onPressed: _selectImage,
-      child: Text('画像を選択'),
-    ));
-
-    fields.add(ElevatedButton(
-      onPressed: _updateItem,
-      child: Text('保存'),
-    ));
-
-    return fields;
+    return Scaffold(
+      appBar: AppBar(),
+      body: SingleChildScrollView(
+        padding: EdgeInsets.fromLTRB(16, 16, 32, 8),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                Padding(
+                  padding: EdgeInsets.only(right: 16.0),
+                  child: beansImage(_selectedImage),
+                ),
+                Expanded(
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      customTextField('name', screenWidth * 0.5),
+                      customTextField('store', screenWidth * 0.5),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+            customTextField('description', screenWidth * 0.9),
+            Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Expanded(
+                  child: customTextField('purchaseDate', screenWidth * 0.4),
+                ),
+                Container(
+                  padding: EdgeInsets.only(right: 16.0),
+                ),
+                Expanded(
+                  child: customTextField('price', screenWidth * 0.4),
+                ),
+              ],
+            ),
+            Row(
+              mainAxisSize: MainAxisSize.max,
+              children: [
+                Expanded(child: customTextField('origin', screenWidth * 0.5)),
+                Container(
+                  padding: EdgeInsets.only(right: 16.0),
+                ),
+                Expanded(child: customTextField('farmName', screenWidth * 0.5))
+              ],
+            ),
+            customTextField('variety', screenWidth / 2 - 32),
+            customTextField('roastLevel', screenWidth / 2 - 32),
+            customTextField('body', screenWidth / 2 - 32),
+            customTextField('acidity', screenWidth / 2 - 32),
+            Row(
+              children: [
+                customTextField('story', screenWidth / 2 - 32),
+                Expanded(
+                  child: Container(),
+                ),
+                Padding(
+                  padding: const EdgeInsets.only(top: 16),
+                  child: ElevatedButton(
+                    onPressed: _updateItem,
+                    style: ButtonStyle(
+                      iconColor: MaterialStateProperty.resolveWith(
+                        (Set states) {
+                          return Theme.of(context).primaryColor;
+                        },
+                      ),
+                    ),
+                    child: Text('追加'),
+                  ),
+                ),
+              ],
+            ),
+          ],
+        ),
+      ),
+    );
   }
 }

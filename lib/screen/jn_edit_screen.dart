@@ -6,7 +6,7 @@ import 'package:image_picker/image_picker.dart';
 import '../utils.dart';
 
 class EditScreen extends StatefulWidget {
-  late Map<String, dynamic> item;
+  late final Map<String, dynamic> item;
 
   EditScreen({required this.item});
 
