@@ -12,13 +12,22 @@ class CoffeeApp extends StatelessWidget {
   Widget build(BuildContext context) {
     return MaterialApp(
       theme: ThemeData(
+        textTheme: TextTheme(
+          bodyMedium: TextStyle(
+            fontFamily: 'San Francisco',
+          )
+        ),
+        colorScheme: ColorScheme.light(
+          primary: Color(0xFF58C0EB),
+          background: Colors.white,
+        ),
         primaryColor: Color(0xFF58C0EB), // 指定された青色を使う
         scaffoldBackgroundColor: Colors.white, // 背景色は白
         appBarTheme: AppBarTheme(
-          color: Color(0xFF58C0EB), // アプリバーも同じ色
+          color: Color(0xFF58C0EB),
         ),
         // textTheme: TextTheme(
-          // bodyText2: TextStyle(color: Colors.black),
+        // bodyText2: TextStyle(color: Colors.black),
         // ),
       ),
       home: MainScreen(),

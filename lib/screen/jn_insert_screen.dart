@@ -14,8 +14,10 @@ class InsertScreen extends StatefulWidget {
 class _InsertScreenState extends State<InsertScreen> {
   final dbHelper = DatabaseHelper.instance;
   final table = 'JournalTable';
+  List<Map<String, dynamic>> _coffeeBeans = [];
   Map<String, TextEditingController> controllers = {};
   File? _storedImage;
+  String _selectedBean = '';
   final Map japaneseTitles = Utils().japaneseTitles;
 
 
@@ -94,6 +96,24 @@ class _InsertScreenState extends State<InsertScreen> {
     await dbHelper.insert(table, row);
 
     Navigator.of(context).pop(); // データ挿入後に画面を閉じる
+  }
+
+  DropdownButton<String> _buildCoffeeBeansDropdown() {
+    return DropdownButton<String>(
+      value: _selectedBean,
+      onChanged: (String? newValue) {
+        setState(() {
+          _selectedBean = newValue!;
+        });
+      },
+      items: _coffeeBeans
+          .map<DropdownMenuItem<String>>((Map<String, dynamic> bean) {
+        return DropdownMenuItem<String>(
+          value: bean['id'].toString(), // IDなどの一意の識別子
+          child: Text(bean['name']), // 表示する名前
+        );
+      }).toList(),
+    );
   }
 
   @override

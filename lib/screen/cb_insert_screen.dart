@@ -14,12 +14,9 @@ class InsertScreen extends StatefulWidget {
 class _InsertScreenState extends State<InsertScreen> {
   final dbHelper = DatabaseHelper.instance;
   final table = 'CoffeeBeansTable';
-  String _selectedBean = '';
-  List<Map<String, dynamic>> _coffeeBeans = [];
   Map<String, TextEditingController> controllers = {};
   File? _storedImage;
   final Map japaneseTitles = Utils().japaneseTitles;
-
 
   @override
   void initState() {
@@ -29,14 +26,15 @@ class _InsertScreenState extends State<InsertScreen> {
 
   void _initControllers() {
     // DatabaseHelperからcoffeebeansColumnsリストを取得
-    final columns = dbHelper.coffeebeansColumns.where((column) => column != 'id' && column != 'imagePath').toList();
+    final columns = dbHelper.coffeebeansColumns
+        .where((column) => column != 'id' && column != 'imagePath')
+        .toList();
 
     // 各カラムに対してTextEditingControllerを初期化
     columns.forEach((column) {
       controllers[column] = TextEditingController();
     });
   }
-
 
   Future<void> _selectImage() async {
     // ボトムシートを表示する関数
@@ -47,7 +45,7 @@ class _InsertScreenState extends State<InsertScreen> {
           child: Wrap(
             children: <Widget>[
               ListTile(
-                  leading: Icon(Icons.photo_camera), 
+                  leading: Icon(Icons.photo_camera),
                   title: Text('カメラで撮影'),
                   onTap: () {
                     Navigator.of(context).pop();
@@ -81,92 +79,144 @@ class _InsertScreenState extends State<InsertScreen> {
   Future<void> _addCoffeeBeanWithImage() async {
     String imagePath = _storedImage?.path ?? '';
     if (controllers['name']?.text.isEmpty ?? true) {
-    final snackBar = SnackBar(
-      content: Text('名前を入力してください'),
-      duration: Duration(seconds: 2),
-    );
-    ScaffoldMessenger.of(context).showSnackBar(snackBar);
-    return;
-  }
-      Map<String, dynamic> row = {
-    for (var entry in controllers.entries)
-      entry.key: entry.value.text,
-    'imagePath': imagePath, // 特別な扱いが必要なフィールドを追加
-  };
+      const snackBar = SnackBar(
+        content: Text('名前を入力してください'),
+        duration: Duration(seconds: 2),
+      );
+      ScaffoldMessenger.of(context).showSnackBar(snackBar);
+      return;
+    }
+    Map<String, dynamic> row = {
+      for (var entry in controllers.entries) entry.key: entry.value.text,
+      'imagePath': imagePath, // 特別な扱いが必要なフィールドを追加
+    };
     await dbHelper.insert(table, row);
 
     Navigator.of(context).pop(); // データ挿入後に画面を閉じる
   }
 
-  Future<List<Map<String, dynamic>>> _getCoffeeBeans() async {
-  var dbHelper = DatabaseHelper.instance;
-  return await dbHelper.queryAllRows('CoffeeBeansTable');
-}
+  Widget beansImage(_storedImage) {
+    Image imageFile;
 
-DropdownButton<String> _buildCoffeeBeansDropdown() {
-  return DropdownButton<String>(
-    value: _selectedBean,
-    onChanged: (String? newValue) {
-      setState(() {
-        _selectedBean = newValue!;
-      });
-    },
-    items: _coffeeBeans.map<DropdownMenuItem<String>>((Map<String, dynamic> bean) {
-      return DropdownMenuItem<String>(
-        value: bean['id'].toString(), // IDなどの一意の識別子
-        child: Text(bean['name']), // 表示する名前
-      );
-    }).toList(),
-  );
-}
+    imageFile = _storedImage != null
+        ? Image.file(
+            _storedImage!,
+            width: 150,
+            height: 150,
+            fit: BoxFit.cover,
+          )
+        : Image.asset(
+            'assets/placeholder.jpg', // プレースホルダー画像へのパス
+            width: 150,
+            height: 150,
+            fit: BoxFit.cover,
+          );
+    return InkWell(
+      onTap: _selectImage,
+      child: Container(
+        decoration: BoxDecoration(
+          borderRadius: BorderRadius.circular(30),
+          border: Border.all(width: 1.0),
+        ),
+        child: ClipRRect(
+            borderRadius: BorderRadius.circular(30), child: imageFile),
+      ),
+    );
+  }
 
+  Widget customTextField(String key, double value) {
+    return SizedBox(
+      width: value,
+      child: TextField(
+        controller: controllers[key],
+        decoration: InputDecoration(
+          labelText: japaneseTitles[key], // ラベルの取得
+        ),
+        // keyboardType: _getKeyboardType(entry.key), // キーボードタイプの指定
+      ),
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
+    double screenWidth = MediaQuery.of(context).size.width;
     return Scaffold(
-      appBar: AppBar(
-        title: Text('新しいコーヒー豆を追加'),
-      ),
+      appBar: AppBar(),
       body: SingleChildScrollView(
-        padding: EdgeInsets.all(8.0),
+        padding: EdgeInsets.fromLTRB(16, 16, 32, 8),
         child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Column(
-              children: controllers.entries.map((entry) {
-              return Padding(
-                padding: const EdgeInsets.only(bottom: 8.0),
-                child: TextField(
-                  controller: entry.value,
-                  decoration: InputDecoration(
-                    labelText: japaneseTitles[entry.key], // ラベルの取得
+            Row(
+              children: [
+                Padding(
+                  padding: EdgeInsets.only(right: 8.0),
+                  child: beansImage(_storedImage),
+                ),
+                Expanded(
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      customTextField('name', screenWidth * 0.5),
+                      customTextField('store', screenWidth * 0.5),
+                    ],
                   ),
-                  // keyboardType: _getKeyboardType(entry.key), // キーボードタイプの指定
                 ),
-              );
-            }).toList(),), 
-                _storedImage != null
-                    ? Image.file(
-                        _storedImage!,
-                        width: 250,
-                        height: 250,
-                        fit: BoxFit.cover,
-                      )
-                    : Image.asset(
-                        'assets/placeholder.jpg', // プレースホルダー画像へのパス
-                        width: 250,
-                        height: 250,
-                        fit: BoxFit.cover,
+              ],
+            ),
+            customTextField('description', screenWidth * 0.9),
+            Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Expanded(
+                  child: customTextField('purchaseDate', screenWidth * 0.4),
+                ),
+                Container(
+                  padding: EdgeInsets.only(right: 16.0),
+                ),
+                Expanded(
+                  child: customTextField('price', screenWidth * 0.4),
+                ),
+              ],
+            ),
+            Row(
+              mainAxisSize: MainAxisSize.max,
+              children: [
+                Expanded(child: customTextField('origin', screenWidth * 0.5)),
+                Container(
+                  padding: EdgeInsets.only(right: 16.0),
+                ),
+                Expanded(child: customTextField('farmName', screenWidth * 0.5))
+              ],
+            ),
+            customTextField('variety', screenWidth / 2 - 32),
+            customTextField('roastLevel', screenWidth / 2 - 32),
+            customTextField('body', screenWidth / 2 - 32),
+            customTextField('acidity', screenWidth / 2 - 32),
+            Row(
+              children: [
+                customTextField('story', screenWidth / 2 - 32),
+                Expanded(
+                  child: Container(),
+                ),
+                Padding(
+                  padding: const EdgeInsets.only(top: 16),
+                  child: ElevatedButton(
+                    onPressed: _addCoffeeBeanWithImage,
+                    style: ButtonStyle(
+                      iconColor: MaterialStateProperty.resolveWith(
+                        (Set states) {
+                          return Theme.of(context).primaryColor;
+                        },
                       ),
-                Text('画像が選択されていません'),
-                ElevatedButton(
-                  onPressed: _selectImage,
-                  child: Text('画像を選択'),
+                    ),
+                    child: Text('追加'),
+                  ),
                 ),
-            
-                ElevatedButton(
-                  onPressed: _addCoffeeBeanWithImage,
-                  child: Text('追加'),
-                ),
+              ],
+            ),
           ],
         ),
       ),

@@ -1,9 +1,9 @@
 import 'dart:io';
-
 import 'package:flutter/material.dart';
 import 'package:coffee_memo/db/database_helper.dart';
 import 'package:coffee_memo/screen/cb_insert_screen.dart';
-import 'cb_detail_screen.dart';
+import 'package:flutter/widgets.dart';
+import 'package:coffee_memo/screen/cb_detail_screen.dart';
 
 class CoffeeBeansHomeScreen extends StatefulWidget {
   @override
@@ -35,46 +35,61 @@ class _CoffeeBeansHomeScreenState extends State<CoffeeBeansHomeScreen> {
         future: dbHelper.queryAllRows(table),
         builder: (context, snapshot) {
           if (snapshot.hasData) {
-            return ListView.builder(
+            return GridView.builder(
+              gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+                crossAxisCount: 4, // 1行に表示するアイテム数
+                childAspectRatio: 4 / 6, // アイテムの縦横比
+              ),
               itemCount: _items.length,
               itemBuilder: (context, index) {
-                return ListTile(
-                    title: Text(_items[index]['name']),
-                    subtitle: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: <Widget>[
-                        // Text(_items[index]['origin']), // 産地
-                        Text(_items[index]['store']), // 購入したお店
-                        // 他のデータもここに追加
-                      ],
+                return Column(
+                  children: [
+                    AspectRatio(
+                      aspectRatio: 0.8,
+                      child: Card(
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(15.0), // 角の丸み
+                          side: BorderSide(width: 0.5),
+                        ),
+                        clipBehavior: Clip.antiAlias,
+                        child: InkWell(
+                          onTap: () async {
+                            await Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (context) =>
+                                    DetailScreen(itemId: _items[index]['id']),
+                              ),
+                            );
+                            _refreshItems();
+                          },
+                          child: _items[index]['imagePath'] != null &&
+                                  _items[index]['imagePath'].isNotEmpty
+                              ? Image.file(
+                                  File(_items[index]['imagePath']),
+                                  fit: BoxFit.cover,
+                                )
+                              : Image.asset(
+                                  'assets/placeholder.jpg',
+                                  fit: BoxFit.cover,
+                                ),
+                        ),
+                      ),
                     ),
-                    onTap: () async {
-                      await Navigator.of(context).push(MaterialPageRoute(
-                        builder: (context) =>
-                            DetailScreen(itemId: _items[index]['id']),
-                      ));
-                      _refreshItems(); // リストを更新
-                    },
-                    leading: _items[index]['imagePath'] != null && _items[index]['imagePath'].isNotEmpty
-                        ? Image.file(
-                            File(_items[index]['imagePath']),
-                            fit: BoxFit.cover,
-                            width: 50,
-                            height: 50,
-                          )
-                        : Image.asset(
-                            'assets/placeholder.jpg',
-                            fit: BoxFit.cover,
-                            width: 50,
-                            height: 50,
-                          ),
-                    trailing: Icon(Icons.arrow_forward));
+                    Text(
+                      _items[index]['name'],
+                      style: TextStyle(
+                        fontSize: 16,
+                      ),
+                    ),
+                  ],
+                );
               },
             );
           } else if (snapshot.hasError) {
             return Text("エラーが発生しました");
           }
-          return CircularProgressIndicator();
+          return Center(child: CircularProgressIndicator());
         },
       ),
       floatingActionButton: FloatingActionButton(

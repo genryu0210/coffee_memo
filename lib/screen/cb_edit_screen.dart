@@ -90,11 +90,12 @@ class _EditScreenState extends State<EditScreen> {
 
     Map<String, dynamic> row = {
       'id': widget.item['id'],
-      'imagePath': imagePath,
+      // 'imagePath': imagePath,
     };
     _controllers.forEach((key, value) {
       row[key] = value['controller'].text; // 各フィールドの値をマップに追加
     });
+    row['imagePath'] = imagePath;
     await dbHelper.update(table, row);
     Navigator.of(context).pop(); // 更新後に画面を閉じる
   }
