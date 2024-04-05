@@ -232,7 +232,8 @@ class _EditScreenState extends State<EditScreen> {
                         },
                       ),
                     ),
-                    child: Text('追加'),
+                    
+                    child: Text('保存'),
                   ),
                 ),
               ],
