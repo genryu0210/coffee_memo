@@ -38,7 +38,7 @@ class _EditScreenState extends State<EditScreen> {
     });
 
     itemDetails?.forEach((key, value) {
-      controllers![key] = TextEditingController(text: value.toString());
+      controllers[key] = TextEditingController(text: value.toString());
     });
 
     }
