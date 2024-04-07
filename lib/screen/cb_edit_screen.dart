@@ -19,7 +19,7 @@ class _EditScreenState extends State<EditScreen> {
   final dbHelper = DatabaseHelper.instance;
   File? _selectedImage;
   Map<String, dynamic>? itemDetails;
-  Map<String, Map>? _controllers;
+  Map<String, TextEditingController> controllers = {};
   final japaneseTitles = Utils().japaneseTitles;
 
   @override
@@ -28,29 +28,25 @@ class _EditScreenState extends State<EditScreen> {
     _initControllers();
   }
 
-  void _initControllers() async{
+  void _initControllers() async {
     final data = await dbHelper.queryItemById(table, widget.itemId);
     setState(await () {
       itemDetails = data;
       _selectedImage = itemDetails!['imagePath'] != null
-      ? File(itemDetails!['imagePath'])
-      :null;
+          ? File(itemDetails!['imagePath'])
+          : null;
     });
-    _controllers = {
-      for (var item in dbHelper.coffeebeansColumns)
-        item: {
-          'controller': TextEditingController(
-              text: itemDetails?[item] != null
-                  ? itemDetails![item].toString()
-                  : ''),
-        }
-    };
-  }
+
+    itemDetails?.forEach((key, value) {
+      controllers![key] = TextEditingController(text: value.toString());
+    });
+
+    }
 
   @override
   void dispose() {
-    _controllers!.forEach((key, value) {
-      value['controller'].dispose();
+    controllers.forEach((key, value) {
+      value.dispose();
     });
     super.dispose();
   }
@@ -104,62 +100,30 @@ class _EditScreenState extends State<EditScreen> {
       'id': itemDetails!['id'],
       // 'imagePath': imagePath,
     };
-    _controllers!.forEach((key, value) {
-      row[key] = value['controller'].text; // 各フィールドの値をマップに追加
+    controllers.forEach((key, value) {
+      row[key] = value.text; // 各フィールドの値をマップに追加
     });
     row['imagePath'] = imagePath;
     await dbHelper.update(table, row);
     Navigator.of(context).pop(); // 更新後に画面を閉じる
   }
 
-
-  Widget beansImage(_selectedImage) {
-    Image imageFile;
-
-    imageFile = itemDetails!['imagePath'] != null
-        ? Image.file(
-            _selectedImage!,
-            width: 150,
-            height: 150,
-            fit: BoxFit.cover,
-          )
-        : Image.asset(
-            'assets/placeholder.jpg', // プレースホルダー画像へのパス
-            width: 150,
-            height: 150,
-            fit: BoxFit.cover,
-          );
-    return InkWell(
-      onTap: _selectImage,
-      child: Container(
-        decoration: BoxDecoration(
-          borderRadius: BorderRadius.circular(30),
-          border: Border.all(width: 1.0),
-        ),
-        child: ClipRRect(
-            borderRadius: BorderRadius.circular(30), child: imageFile),
-      ),
-    );
-  }
+  Widget Function(File? _storedImage, VoidCallback? onTap) beansImage =
+      Utils.beansImage;
 
   Widget customTextField(String key, double value) {
     return SizedBox(
       width: value,
       child: TextField(
-        controller: _controllers![key]!['controller'],
-        decoration:
-            InputDecoration(labelText: japaneseTitles[key]),
+        controller: controllers[key],
+        decoration: InputDecoration(labelText: japaneseTitles[key]),
       ),
     );
   }
 
-
   @override
   Widget build(BuildContext context) {
     double screenWidth = MediaQuery.of(context).size.width;
-    if(_controllers == null) {
-      return Center(child: CircularProgressIndicator());
-    }
     return Scaffold(
       appBar: AppBar(),
       body: SingleChildScrollView(
@@ -172,7 +136,9 @@ class _EditScreenState extends State<EditScreen> {
               children: [
                 Padding(
                   padding: EdgeInsets.only(right: 16.0),
-                  child: beansImage(_selectedImage),
+                  child: itemDetails!['imagePath'].isNotEmpty
+                      ? beansImage(File(itemDetails!['imagePath']), null)
+                      : beansImage(null, null),
                 ),
                 Expanded(
                   child: Column(
@@ -232,7 +198,6 @@ class _EditScreenState extends State<EditScreen> {
                         },
                       ),
                     ),
-                    
                     child: Text('保存'),
                   ),
                 ),

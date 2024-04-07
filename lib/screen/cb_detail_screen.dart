@@ -19,6 +19,7 @@ class _DetailScreenState extends State<DetailScreen> {
   Map<String, dynamic>? itemDetails;
   Map<String, TextEditingController> controllers = {};
   final japaneseTitles = Utils().japaneseTitles;
+  late String roastLevel;
 
   @override
   void initState() {
@@ -38,6 +39,7 @@ class _DetailScreenState extends State<DetailScreen> {
     itemDetails?.forEach((key, value) {
       controllers[key] = TextEditingController(text: value.toString());
     });
+    roastLevel = '${controllers["roastLevel"]!.text}ロースト';
   }
 
   void _showDeleteDialog(BuildContext context, String name) {
@@ -77,46 +79,16 @@ class _DetailScreenState extends State<DetailScreen> {
     );
   }
 
-  Widget beansImage() {
-    Image WidgetImage;
-    if (itemDetails!['imagePath'] != null) {
-      File imageFile = File(itemDetails!['imagePath']);
-      WidgetImage = Image.file(
-        imageFile,
-        width: 150,
-        height: 150,
-        fit: BoxFit.cover,
-      );
-    } else {
-      WidgetImage = Image.asset(
-        'assets/placeholder.jpg', // プレースホルダー画像へのパス
-        width: 150,
-        height: 150,
-        fit: BoxFit.cover,
-      );
-    }
-    return Container(
-      decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(30),
-        border: Border.all(width: 1.0),
-      ),
-      child: ClipRRect(
-          borderRadius: BorderRadius.circular(30), child: WidgetImage),
-    );
+  Widget Function(String key, double value,
+          Map<String, TextEditingController> controllers) customTextField =
+      Utils().customTextField;
+
+  Widget makeCustomTextField(String key, double value) {
+    return customTextField(key, value, controllers);
   }
 
-  Widget customTextField(String key, double value) {
-    return SizedBox(
-      width: value,
-      child: TextField(
-        readOnly: true,
-        controller: controllers[key],
-        decoration: InputDecoration(
-          labelText: japaneseTitles[key],
-        ),
-      ),
-    );
-  }
+  Widget Function(File? _storedImage, VoidCallback? onTap) beansImage =
+      Utils.beansImage;
 
   @override
   Widget build(BuildContext context) {
@@ -139,52 +111,66 @@ class _DetailScreenState extends State<DetailScreen> {
               children: [
                 Padding(
                   padding: EdgeInsets.only(right: 16.0),
-                  child: beansImage(),
+                  child: beansImage(
+                      itemDetails!['imagePath'].isNotEmpty
+                          ? File(itemDetails!['imagePath'])
+                          : null,
+                      null),
                 ),
                 Expanded(
                   child: Column(
                     mainAxisSize: MainAxisSize.min,
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      customTextField('name', screenWidth * 0.5),
-                      customTextField('store', screenWidth * 0.5),
+                      makeCustomTextField('name', screenWidth * 0.5),
+                      makeCustomTextField('store', screenWidth * 0.5),
                     ],
                   ),
                 ),
               ],
             ),
-            customTextField('description', screenWidth * 0.9),
+            makeCustomTextField('description', screenWidth * 0.9),
             Row(
               mainAxisSize: MainAxisSize.min,
               children: [
                 Expanded(
-                  child: customTextField('purchaseDate', screenWidth * 0.4),
+                  child: makeCustomTextField('purchaseDate', screenWidth * 0.4),
                 ),
                 Container(
                   padding: EdgeInsets.only(right: 16.0),
                 ),
                 Expanded(
-                  child: customTextField('price', screenWidth * 0.4),
+                  child: makeCustomTextField('price', screenWidth * 0.4),
                 ),
               ],
             ),
             Row(
               mainAxisSize: MainAxisSize.max,
               children: [
-                Expanded(child: customTextField('origin', screenWidth * 0.5)),
+                Expanded(child: makeCustomTextField('origin', screenWidth * 0.5)),
                 Container(
                   padding: EdgeInsets.only(right: 16.0),
                 ),
-                Expanded(child: customTextField('farmName', screenWidth * 0.5))
+                Expanded(child: makeCustomTextField('farmName', screenWidth * 0.5))
               ],
             ),
-            customTextField('variety', screenWidth / 2 - 32),
-            customTextField('roastLevel', screenWidth / 2 - 32),
-            customTextField('body', screenWidth / 2 - 32),
-            customTextField('acidity', screenWidth / 2 - 32),
+            makeCustomTextField('variety', screenWidth / 2 - 32),
+            Padding(
+              padding: const EdgeInsets.symmetric(vertical: 16),
+              child: Text(
+                '焙煎度',
+                style: TextStyle(fontSize: 16),
+              ),
+            ),
+            Container(
+              height: 34,
+              child: Text(roastLevel),
+            ),
+            makeCustomTextField('body', screenWidth / 2 - 32),
+            makeCustomTextField('acidity', screenWidth / 2 - 32),
             Row(
               children: [
-                customTextField('story', screenWidth / 2 - 32),
+                makeCustomTextField('story', screenWidth / 2 - 32),
                 Expanded(
                   child: Container(),
                 ),

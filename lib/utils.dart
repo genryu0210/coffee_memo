@@ -1,3 +1,7 @@
+import 'dart:io';
+
+import 'package:flutter/material.dart';
+
 class Utils {
   final Map<String, String> japaneseTitles = {
     'id': 'ID',
@@ -33,4 +37,54 @@ class Utils {
     'sweetnessScore': '甘味',
     'sweetnessMemo': '甘味に関するメモ',
   };
+    final List<String> roastLevels = [
+    'ライト',
+    'シナモン',
+    'ミディアム',
+    'ハイ',
+    'シティ',
+    'フルシティ',
+    'フレンチ',
+    'イタリアン'
+  ];
+
+  static Widget beansImage(File? _storedImage, VoidCallback? onTap) {
+    Image imageFile = _storedImage != null
+      ? Image.file(
+          _storedImage,
+          width: 150,
+          height: 150,
+          fit: BoxFit.cover,
+        )
+      : Image.asset(
+          'assets/placeholder.jpg', // プレースホルダー画像へのパス
+          width: 150,
+          height: 150,
+          fit: BoxFit.cover,
+        );
+
+    return InkWell(
+      onTap: onTap != null ? onTap: () {},
+      child: Container(
+        decoration: BoxDecoration(
+          borderRadius: BorderRadius.circular(30),
+          border: Border.all(width: 1.0),
+        ),
+        child: ClipRRect(
+          borderRadius: BorderRadius.circular(30),
+          child: imageFile,
+        ),
+      ),
+    );
+  }
+
+  Widget customTextField(String key, double value, Map<String, TextEditingController> controllers) {
+    return SizedBox(
+      width: value,
+      child: TextField(
+        controller: controllers[key],
+        decoration: InputDecoration(labelText: japaneseTitles[key]),
+      ),
+    );
+  }
 }

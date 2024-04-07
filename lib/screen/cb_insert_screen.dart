@@ -17,6 +17,8 @@ class _InsertScreenState extends State<InsertScreen> {
   Map<String, TextEditingController> controllers = {};
   File? _storedImage;
   final Map japaneseTitles = Utils().japaneseTitles;
+  final List<String> roastLevels = Utils().roastLevels;
+  int selectedIndex = -1;
 
   @override
   void initState() {
@@ -95,34 +97,8 @@ class _InsertScreenState extends State<InsertScreen> {
     Navigator.of(context).pop(); // データ挿入後に画面を閉じる
   }
 
-  Widget beansImage(_storedImage) {
-    Image imageFile;
-
-    imageFile = _storedImage != null
-        ? Image.file(
-            _storedImage!,
-            width: 150,
-            height: 150,
-            fit: BoxFit.cover,
-          )
-        : Image.asset(
-            'assets/placeholder.jpg', // プレースホルダー画像へのパス
-            width: 150,
-            height: 150,
-            fit: BoxFit.cover,
-          );
-    return InkWell(
-      onTap: _selectImage,
-      child: Container(
-        decoration: BoxDecoration(
-          borderRadius: BorderRadius.circular(30),
-          border: Border.all(width: 1.0),
-        ),
-        child: ClipRRect(
-            borderRadius: BorderRadius.circular(30), child: imageFile),
-      ),
-    );
-  }
+  Widget Function(File? _storedImage, VoidCallback? onTap) beansImage =
+      Utils.beansImage;
 
   Widget customTextField(String key, double value) {
     return SizedBox(
@@ -140,6 +116,7 @@ class _InsertScreenState extends State<InsertScreen> {
   @override
   Widget build(BuildContext context) {
     double screenWidth = MediaQuery.of(context).size.width;
+
     return Scaffold(
       appBar: AppBar(),
       body: SingleChildScrollView(
@@ -152,7 +129,7 @@ class _InsertScreenState extends State<InsertScreen> {
               children: [
                 Padding(
                   padding: EdgeInsets.only(right: 16.0),
-                  child: beansImage(_storedImage),
+                  child: beansImage(_storedImage, _selectImage),
                 ),
                 Expanded(
                   child: Column(
@@ -192,7 +169,43 @@ class _InsertScreenState extends State<InsertScreen> {
               ],
             ),
             customTextField('variety', screenWidth / 2 - 32),
-            customTextField('roastLevel', screenWidth / 2 - 32),
+            Text(
+              '焙煎度',
+              style: TextStyle(fontSize: 16),
+            ),
+            Container(
+              height: 34,
+              child: ListView.builder(
+                shrinkWrap: true,
+                scrollDirection: Axis.horizontal,
+                itemCount: roastLevels.length,
+                itemBuilder: (BuildContext context, int index) {
+                  return Container(
+                    decoration: BoxDecoration(
+                      border: Border.all(
+                        width: 1.0,
+                        color: selectedIndex == index
+                            ? Theme.of(context).primaryColor
+                            : Colors.transparent,
+                      ),
+                      borderRadius: BorderRadius.circular(16.0),
+                    ),
+                    child: TextButton(
+                      onPressed: () {
+                        setState(() {
+                          selectedIndex = index; // 選択されたインデックスを更新
+                          controllers['roastLevel']!.text = roastLevels[index];
+                        });
+                      },
+                      child: Text(
+                        roastLevels[index],
+                        style: TextStyle(color: Colors.black),
+                      ),
+                    ),
+                  );
+                },
+              ),
+            ),
             customTextField('body', screenWidth / 2 - 32),
             customTextField('acidity', screenWidth / 2 - 32),
             Row(
