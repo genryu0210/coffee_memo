@@ -1,5 +1,4 @@
 import 'dart:io';
-
 import 'package:flutter/material.dart';
 
 class Utils {
@@ -8,7 +7,7 @@ class Utils {
     'name': '名前',
     'store': '購入店',
     'imagePath': '画像パス',
-    'description': '説明', 
+    'description': '説明',
     'purchaseDate': '購入日',
     'updateDate': '更新日',
     'price': '価格',
@@ -16,7 +15,7 @@ class Utils {
     'origin': '産地',
     'farmName': '農園名',
     'variety': '品種',
-    'process': '精製方法', 
+    'process': '精製方法',
     'roastLevel': '焙煎度',
     'body': 'ボディ',
     'acidity': '酸味',
@@ -37,7 +36,7 @@ class Utils {
     'sweetnessScore': '甘味',
     'sweetnessMemo': '甘味に関するメモ',
   };
-    final List<String> roastLevels = [
+  final List<String> roastLevels = [
     'ライト',
     'シナモン',
     'ミディアム',
@@ -50,21 +49,21 @@ class Utils {
 
   static Widget beansImage(File? _storedImage, VoidCallback? onTap) {
     Image imageFile = _storedImage != null
-      ? Image.file(
-          _storedImage,
-          width: 150,
-          height: 150,
-          fit: BoxFit.cover,
-        )
-      : Image.asset(
-          'assets/placeholder.jpg', // プレースホルダー画像へのパス
-          width: 150,
-          height: 150,
-          fit: BoxFit.cover,
-        );
+        ? Image.file(
+            _storedImage,
+            width: 150,
+            height: 150,
+            fit: BoxFit.cover,
+          )
+        : Image.asset(
+            'assets/placeholder.jpg', // プレースホルダー画像へのパス
+            width: 150,
+            height: 150,
+            fit: BoxFit.cover,
+          );
 
     return InkWell(
-      onTap: onTap != null ? onTap: () {},
+      onTap: onTap != null ? onTap : () {},
       child: Container(
         decoration: BoxDecoration(
           borderRadius: BorderRadius.circular(30),
@@ -78,7 +77,8 @@ class Utils {
     );
   }
 
-  Widget customTextField(String key, double value, Map<String, TextEditingController> controllers) {
+  Widget customTextField(String key, double value,
+      Map<String, TextEditingController> controllers) {
     return SizedBox(
       width: value,
       child: TextField(

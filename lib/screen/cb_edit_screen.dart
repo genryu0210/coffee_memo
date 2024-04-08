@@ -21,6 +21,8 @@ class _EditScreenState extends State<EditScreen> {
   Map<String, dynamic>? itemDetails;
   Map<String, TextEditingController> controllers = {};
   final japaneseTitles = Utils().japaneseTitles;
+  final List<String> roastLevels = Utils().roastLevels;
+  int selectedIndex = -1;
 
   @override
   void initState() {
@@ -36,12 +38,11 @@ class _EditScreenState extends State<EditScreen> {
           ? File(itemDetails!['imagePath'])
           : null;
     });
-
     itemDetails?.forEach((key, value) {
       controllers[key] = TextEditingController(text: value.toString());
     });
-
-    }
+    selectedIndex = int.parse(controllers['roastLevel']!.text);
+  }
 
   @override
   void dispose() {
@@ -63,15 +64,15 @@ class _EditScreenState extends State<EditScreen> {
                   leading: Icon(Icons.photo_camera),
                   title: Text('カメラで撮影'),
                   onTap: () {
-                    Navigator.of(context).pop();
                     _getImage(ImageSource.camera);
+                    Navigator.of(context).pop();
                   }),
               ListTile(
                 leading: Icon(Icons.photo_library),
                 title: Text('ギャラリーから選択'),
                 onTap: () {
-                  Navigator.of(context).pop();
                   _getImage(ImageSource.gallery);
+                  Navigator.of(context).pop();
                 },
               ),
             ],
@@ -104,6 +105,7 @@ class _EditScreenState extends State<EditScreen> {
       row[key] = value.text; // 各フィールドの値をマップに追加
     });
     row['imagePath'] = imagePath;
+    row['roastLevel'] = selectedIndex;
     await dbHelper.update(table, row);
     Navigator.of(context).pop(); // 更新後に画面を閉じる
   }
@@ -136,9 +138,10 @@ class _EditScreenState extends State<EditScreen> {
               children: [
                 Padding(
                   padding: EdgeInsets.only(right: 16.0),
-                  child: itemDetails!['imagePath'].isNotEmpty
-                      ? beansImage(File(itemDetails!['imagePath']), null)
-                      : beansImage(null, null),
+                  child: itemDetails?['imagePath'] != null &&
+                          itemDetails!['imagePath'].isNotEmpty
+                      ? beansImage(_selectedImage, _selectImage)
+                      : beansImage(null, _selectImage),
                 ),
                 Expanded(
                   child: Column(
@@ -178,7 +181,44 @@ class _EditScreenState extends State<EditScreen> {
               ],
             ),
             customTextField('variety', screenWidth / 2 - 32),
-            customTextField('roastLevel', screenWidth / 2 - 32),
+            Text(
+              '焙煎度',
+              style: TextStyle(fontSize: 16),
+            ),
+            Container(
+              height: 34,
+              child: ListView.builder(
+                shrinkWrap: true,
+                scrollDirection: Axis.horizontal,
+                itemCount: roastLevels.length,
+                itemBuilder: (BuildContext context, int index) {
+                  return Container(
+                    decoration: BoxDecoration(
+                      border: Border.all(
+                        width: 1.0,
+                        color: selectedIndex == index
+                            ? Theme.of(context).primaryColor
+                            : Colors.transparent,
+                      ),
+                      borderRadius: BorderRadius.circular(16.0),
+                    ),
+                    child: TextButton(
+                      onPressed: () {
+                        setState(
+                          () {
+                            selectedIndex = index; // 選択されたインデックスを更新
+                          },
+                        );
+                      },
+                      child: Text(
+                        roastLevels[index],
+                        style: TextStyle(color: Colors.black),
+                      ),
+                    ),
+                  );
+                },
+              ),
+            ),
             customTextField('body', screenWidth / 2 - 32),
             customTextField('acidity', screenWidth / 2 - 32),
             Row(

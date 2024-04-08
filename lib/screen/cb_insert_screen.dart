@@ -91,6 +91,7 @@ class _InsertScreenState extends State<InsertScreen> {
     Map<String, dynamic> row = {
       for (var entry in controllers.entries) entry.key: entry.value.text,
       'imagePath': imagePath, // 特別な扱いが必要なフィールドを追加
+      'roastLevel': selectedIndex.toString(),
     };
     await dbHelper.insert(table, row);
 
@@ -192,10 +193,11 @@ class _InsertScreenState extends State<InsertScreen> {
                     ),
                     child: TextButton(
                       onPressed: () {
-                        setState(() {
-                          selectedIndex = index; // 選択されたインデックスを更新
-                          controllers['roastLevel']!.text = roastLevels[index];
-                        });
+                        setState(
+                          () {
+                            selectedIndex = index; // 選択されたインデックスを更新
+                          },
+                        );
                       },
                       child: Text(
                         roastLevels[index],

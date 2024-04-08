@@ -39,7 +39,12 @@ class _DetailScreenState extends State<DetailScreen> {
     itemDetails?.forEach((key, value) {
       controllers[key] = TextEditingController(text: value.toString());
     });
-    roastLevel = '${controllers["roastLevel"]!.text}ロースト';
+    if (controllers["roastLevel"]!.text != '-1') {
+    roastLevel = '${Utils().roastLevels[(int.parse(controllers["roastLevel"]!.text))]}ロースト';  
+    } else {
+      roastLevel = '';
+    }
+    
   }
 
   void _showDeleteDialog(BuildContext context, String name) {
