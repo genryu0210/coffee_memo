@@ -78,7 +78,7 @@ class DatabaseHelper {
     farmName TEXT,
     variety TEXT,
     process TEXT, 
-    roastLevel TEXT,
+    roastLevel INTEGER,
     body INTEGER,
     acidity INTEGER,
     story TEXT

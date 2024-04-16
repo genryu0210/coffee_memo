@@ -6,9 +6,10 @@ import 'package:image_picker/image_picker.dart';
 import '../utils.dart';
 
 class EditScreen extends StatefulWidget {
-  late final Map<String, dynamic> item;
+  final int itemId;
 
-  EditScreen({required this.item});
+
+  EditScreen({required this.itemId});
 
   @override
   _EditScreenState createState() => _EditScreenState();
@@ -25,15 +26,15 @@ class _EditScreenState extends State<EditScreen> {
   void initState() {
     super.initState();
     _initControllers();
-  }
+}
 
   void _initControllers() {
     _controllers = { for (var item in dbHelper.journalColumns.where((column) => column != 'id' && column != 'imagePath')
         .toList()
     ) item : {
         'controller': TextEditingController(
-            text:
-                widget.item[item] != null ? widget.item[item].toString() : ''),
+            text: null), 
+                // widget.item[item] != null ? widget.item[item].toString() : ''),
         'JapaneseTitle':  japaneseTitles[item] ?? item,
       } };
   }
@@ -87,11 +88,11 @@ class _EditScreenState extends State<EditScreen> {
   }
 
   void _updateItem() async {
-    final imagePath =
-        _selectedImage != null ? _selectedImage!.path : widget.item['imagePath'];
+    final imagePath = null;
+        // _selectedImage != null ? _selectedImage!.path : widget.item['imagePath'];
 
     Map<String, dynamic> row = {
-      'id': widget.item['id'],
+      // 'id': widget.item['id'],
       'imagePath': imagePath,
     };
     _controllers.forEach((key, value) {
@@ -136,14 +137,14 @@ class _EditScreenState extends State<EditScreen> {
         height: 250,
         fit: BoxFit.cover,
       ));
-    } else if (widget.item['imagePath'] != null &&
-        widget.item['imagePath'].isNotEmpty) {
-      fields.add(Image.file(
-        File(widget.item['imagePath']),
-        width: 250,
-        height: 250,
-        fit: BoxFit.cover,
-      ));
+    // } else if (widget.item['imagePath'] != null &&
+    //     widget.item['imagePath'].isNotEmpty) {
+    //   fields.add(Image.file(
+    //     File(widget.item['imagePath']),
+    //     width: 250,
+    //     height: 250,
+    //     fit: BoxFit.cover,
+    //   ));
     } else {
       fields.add(Image.asset('assets/placeholder.jpg'));
     }

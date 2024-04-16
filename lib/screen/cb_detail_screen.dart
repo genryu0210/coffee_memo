@@ -1,9 +1,13 @@
 import 'dart:io';
+import 'dart:ui';
 
 import 'package:coffee_memo/screen/cb_edit_screen.dart';
+import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:coffee_memo/db/database_helper.dart';
 import 'package:coffee_memo/utils.dart';
+import 'package:flutter/rendering.dart';
+import 'package:flutter/widgets.dart';
 
 class DetailScreen extends StatefulWidget {
   final int itemId;
@@ -20,6 +24,8 @@ class _DetailScreenState extends State<DetailScreen> {
   Map<String, TextEditingController> controllers = {};
   final japaneseTitles = Utils().japaneseTitles;
   late String roastLevel;
+  late int bodyLevel;
+  late int acidityLevel;
 
   @override
   void initState() {
@@ -40,11 +46,14 @@ class _DetailScreenState extends State<DetailScreen> {
       controllers[key] = TextEditingController(text: value.toString());
     });
     if (controllers["roastLevel"]!.text != '-1') {
-    roastLevel = '${Utils().roastLevels[(int.parse(controllers["roastLevel"]!.text))]}ロースト';  
+      roastLevel =
+          '${Utils().roastLevels[(int.parse(controllers["roastLevel"]!.text))]}ロースト';
     } else {
       roastLevel = '';
     }
-    
+
+    bodyLevel = int.parse(controllers['body']!.text);
+    acidityLevel = int.parse(controllers['acidity']!.text);
   }
 
   void _showDeleteDialog(BuildContext context, String name) {
@@ -92,8 +101,83 @@ class _DetailScreenState extends State<DetailScreen> {
     return customTextField(key, value, controllers);
   }
 
+  Widget textBox(String key) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        SizedBox(height: 8),
+        Text(
+          japaneseTitles[key]!,
+          style: TextStyle(fontSize: 16),
+        ),
+        Padding(
+          padding: const EdgeInsets.only(top: 4, bottom: 8),
+          child: Row(
+            children: [
+              Expanded(
+                child: Container(
+                  decoration: BoxDecoration(
+                      border: Border(
+                          bottom: BorderSide(color: Colors.black, width: 1.0))),
+                  child: Text(
+                    itemDetails![key],
+                    style: TextStyle(fontSize: 16),
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ],
+    );
+  }
+
   Widget Function(File? _storedImage, VoidCallback? onTap) beansImage =
       Utils.beansImage;
+
+  Widget tasteLevel(String taste) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          japaneseTitles[taste]!,
+          style: TextStyle(fontSize: 16),
+        ),
+        SizedBox(
+          height: 34,
+          child: Row(
+            children: List.generate(
+              5,
+              (index) => _buildBodyIcon(taste, index + 1),
+            ),
+          ),
+        )
+      ],
+    );
+  }
+
+  Widget _buildBodyIcon(String taste, int level) {
+    int currentIndex = _getCurrentIndex(taste);
+    return IconButton(
+      icon: Icon(
+        Icons.star,
+        color: currentIndex >= level ? Colors.amber : Colors.grey,
+      ),
+      onPressed: () {},
+    );
+  }
+
+  int _getCurrentIndex(String taste) {
+    switch (taste) {
+      case 'body':
+        return bodyLevel;
+      case 'acidity':
+        return acidityLevel;
+      // 他の味覚の場合も同様に追加
+      default:
+        return -1;
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -127,52 +211,63 @@ class _DetailScreenState extends State<DetailScreen> {
                     mainAxisSize: MainAxisSize.min,
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      makeCustomTextField('name', screenWidth * 0.5),
-                      makeCustomTextField('store', screenWidth * 0.5),
+                      textBox('name'),
+                      textBox('purchaseDate'),
                     ],
                   ),
                 ),
               ],
             ),
-            makeCustomTextField('description', screenWidth * 0.9),
+            textBox('description'),
             Row(
               mainAxisSize: MainAxisSize.min,
               children: [
                 Expanded(
-                  child: makeCustomTextField('purchaseDate', screenWidth * 0.4),
+                  child: textBox('store'),
                 ),
                 Container(
                   padding: EdgeInsets.only(right: 16.0),
                 ),
                 Expanded(
-                  child: makeCustomTextField('price', screenWidth * 0.4),
+                  child: textBox('price'),
                 ),
               ],
             ),
             Row(
               mainAxisSize: MainAxisSize.max,
               children: [
-                Expanded(child: makeCustomTextField('origin', screenWidth * 0.5)),
+                Expanded(child: textBox('origin')),
                 Container(
                   padding: EdgeInsets.only(right: 16.0),
                 ),
-                Expanded(child: makeCustomTextField('farmName', screenWidth * 0.5))
+                Expanded(child: textBox('farmName'))
               ],
             ),
-            makeCustomTextField('variety', screenWidth / 2 - 32),
+            Row(
+              children: [
+                Expanded(child: textBox('variety')),
+                SizedBox(
+                  width: 16
+                ),
+                Expanded(child: Container()),
+              ],
+            ),
+            SizedBox(
+              height: 16,
+            ),
+            Text(
+              '焙煎度',
+              style: TextStyle(fontSize: 16),
+            ),
             Padding(
-              padding: const EdgeInsets.symmetric(vertical: 16),
+              padding: const EdgeInsets.symmetric(vertical: 8.0),
               child: Text(
-                '焙煎度',
+                roastLevel,
                 style: TextStyle(fontSize: 16),
               ),
             ),
-            Container(
-              height: 34,
-              child: Text(roastLevel),
-            ),
-            makeCustomTextField('body', screenWidth / 2 - 32),
-            makeCustomTextField('acidity', screenWidth / 2 - 32),
+            tasteLevel('body'),
+            tasteLevel('acidity'),
             Row(
               children: [
                 makeCustomTextField('story', screenWidth / 2 - 32),

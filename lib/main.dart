@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:coffee_memo/screen/main_screen.dart';
+import 'package:flutter_localizations/flutter_localizations.dart';
 
 void main() {
+  // debugPaintSizeEnabled =true;
   runApp(CoffeeApp());
 }
 
@@ -11,6 +13,15 @@ class CoffeeApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
+      localizationsDelegates: [
+        GlobalMaterialLocalizations.delegate,
+        GlobalWidgetsLocalizations.delegate,
+    ],
+    // （3） 対応する言語の宣言
+    supportedLocales: [
+        Locale('ja',''),
+        Locale('en',''),
+    ],
       theme: ThemeData(
         textTheme: TextTheme(
           bodyMedium: TextStyle(

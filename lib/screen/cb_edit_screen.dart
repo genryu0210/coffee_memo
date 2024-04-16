@@ -3,6 +3,7 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:coffee_memo/db/database_helper.dart';
 import 'package:image_picker/image_picker.dart';
+import 'package:intl/intl.dart';
 import '../utils.dart';
 
 class EditScreen extends StatefulWidget {
@@ -22,7 +23,10 @@ class _EditScreenState extends State<EditScreen> {
   Map<String, TextEditingController> controllers = {};
   final japaneseTitles = Utils().japaneseTitles;
   final List<String> roastLevels = Utils().roastLevels;
-  int selectedIndex = -1;
+  DateTime purchaseDate = DateTime.now();
+  int roastIndex = -1;
+  int bodyIndex = -1;
+  int acidityIndex = -1;
 
   @override
   void initState() {
@@ -41,7 +45,10 @@ class _EditScreenState extends State<EditScreen> {
     itemDetails?.forEach((key, value) {
       controllers[key] = TextEditingController(text: value.toString());
     });
-    selectedIndex = int.parse(controllers['roastLevel']!.text);
+    purchaseDate = DateTime.parse(itemDetails!['purchaseDate']);
+    roastIndex = int.parse(controllers['roastLevel']!.text);
+    bodyIndex = int.parse(controllers['body']!.text);
+    acidityIndex = int.parse(controllers['acidity']!.text);
   }
 
   @override
@@ -50,6 +57,45 @@ class _EditScreenState extends State<EditScreen> {
       value.dispose();
     });
     super.dispose();
+  }
+
+  void _updateItem() async {
+    final imagePath = _selectedImage != null
+        ? _selectedImage!.path
+        : itemDetails!['imagePath'];
+
+    Map<String, dynamic> row = {
+      'id': itemDetails!['id'],
+      // 'imagePath': imagePath,
+    };
+    controllers.forEach((key, value) {
+      row[key] = value.text; // 各フィールドの値をマップに追加
+    });
+    row['imagePath'] = imagePath;
+    row['roastLevel'] = roastIndex;
+    row['body'] = bodyIndex;
+    row['acidity'] = acidityIndex;
+    row['purchaseDate'] = DateFormat('yyyy-MM-dd').format(purchaseDate);
+    row['updateDate'] = DateTime.now().toString();
+
+    await dbHelper.update(table, row);
+    Navigator.of(context).pop(); // 更新後に画面を閉じる
+  }
+
+  Future<void> _selectDate(BuildContext context) async {
+    final DateTime? picked = await showDatePicker(
+      context: context,
+      initialDate: purchaseDate, // 最初に表示する日付
+      firstDate: DateTime(2020), // 選択できる日付の最小値
+      lastDate: DateTime(2040), // 選択できる日付の最大値
+    );
+
+    if (picked != null) {
+      setState(() {
+        // 選択された日付を変数に代入
+        purchaseDate = picked;
+      });
+    }
   }
 
   Future<void> _selectImage() async {
@@ -92,24 +138,6 @@ class _EditScreenState extends State<EditScreen> {
     }
   }
 
-  void _updateItem() async {
-    final imagePath = _selectedImage != null
-        ? _selectedImage!.path
-        : itemDetails!['imagePath'];
-
-    Map<String, dynamic> row = {
-      'id': itemDetails!['id'],
-      // 'imagePath': imagePath,
-    };
-    controllers.forEach((key, value) {
-      row[key] = value.text; // 各フィールドの値をマップに追加
-    });
-    row['imagePath'] = imagePath;
-    row['roastLevel'] = selectedIndex;
-    await dbHelper.update(table, row);
-    Navigator.of(context).pop(); // 更新後に画面を閉じる
-  }
-
   Widget Function(File? _storedImage, VoidCallback? onTap) beansImage =
       Utils.beansImage;
 
@@ -121,6 +149,66 @@ class _EditScreenState extends State<EditScreen> {
         decoration: InputDecoration(labelText: japaneseTitles[key]),
       ),
     );
+  }
+
+  Widget tasteLevel(String taste) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          japaneseTitles[taste]!,
+          style: TextStyle(fontSize: 16),
+        ),
+        SizedBox(
+          height: 34,
+          child: Row(
+            children: List.generate(
+              5,
+              (index) => _buildBodyIcon(taste, index + 1),
+            ),
+          ),
+        )
+      ],
+    );
+  }
+
+  Widget _buildBodyIcon(String taste, int level) {
+    int currentIndex = _getCurrentIndex(taste);
+    return IconButton(
+      icon: Icon(
+        Icons.star,
+        color: currentIndex >= level ? Colors.amber : Colors.grey,
+      ),
+      onPressed: () {
+        setState(() {
+          _setTasteIndex(taste, level);
+        });
+      },
+    );
+  }
+
+  int _getCurrentIndex(String taste) {
+    switch (taste) {
+      case 'body':
+        return bodyIndex;
+      case 'acidity':
+        return acidityIndex;
+      // 他の味覚の場合も同様に追加
+      default:
+        return -1;
+    }
+  }
+
+  void _setTasteIndex(String taste, int level) {
+    switch (taste) {
+      case 'body':
+        bodyIndex = level;
+        break;
+      case 'acidity':
+        acidityIndex = level;
+        break;
+      // 他の味覚の場合も同様に追加
+    }
   }
 
   @override
@@ -149,7 +237,33 @@ class _EditScreenState extends State<EditScreen> {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       customTextField('name', screenWidth * 0.5),
-                      customTextField('store', screenWidth * 0.5),
+                      Padding(
+                        padding: const EdgeInsets.only(top: 8.0),
+                        child: Text(
+                          '購入日',
+                          style: TextStyle(fontSize: 16),
+                        ),
+                      ),
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.start,
+                        children: [
+                          Text(
+                            '${purchaseDate.year}/${purchaseDate.month}/${purchaseDate.day}',
+                            style: TextStyle(fontSize: 16),
+                          ),
+                          IconButton(
+                              onPressed: () => _selectDate(context),
+                              icon: Icon(Icons.calendar_today))
+                        ],
+                      ),
+                      Container(
+                        width: double.infinity,
+                        height: 1.0,
+                        decoration: BoxDecoration(
+                          border: Border(
+                              top: BorderSide(width: 1.0, color: Colors.black)),
+                        ),
+                      )
                     ],
                   ),
                 ),
@@ -160,7 +274,7 @@ class _EditScreenState extends State<EditScreen> {
               mainAxisSize: MainAxisSize.min,
               children: [
                 Expanded(
-                  child: customTextField('purchaseDate', screenWidth * 0.4),
+                  child: customTextField('store', screenWidth * 0.4),
                 ),
                 Container(
                   padding: EdgeInsets.only(right: 16.0),
@@ -181,6 +295,9 @@ class _EditScreenState extends State<EditScreen> {
               ],
             ),
             customTextField('variety', screenWidth / 2 - 32),
+            SizedBox(
+              height: 32,
+            ),
             Text(
               '焙煎度',
               style: TextStyle(fontSize: 16),
@@ -196,7 +313,7 @@ class _EditScreenState extends State<EditScreen> {
                     decoration: BoxDecoration(
                       border: Border.all(
                         width: 1.0,
-                        color: selectedIndex == index
+                        color: roastIndex == index
                             ? Theme.of(context).primaryColor
                             : Colors.transparent,
                       ),
@@ -206,7 +323,7 @@ class _EditScreenState extends State<EditScreen> {
                       onPressed: () {
                         setState(
                           () {
-                            selectedIndex = index; // 選択されたインデックスを更新
+                            roastIndex = index; // 選択されたインデックスを更新
                           },
                         );
                       },
@@ -219,8 +336,8 @@ class _EditScreenState extends State<EditScreen> {
                 },
               ),
             ),
-            customTextField('body', screenWidth / 2 - 32),
-            customTextField('acidity', screenWidth / 2 - 32),
+            tasteLevel('body'),
+            tasteLevel('acidity'),
             Row(
               children: [
                 customTextField('story', screenWidth / 2 - 32),
