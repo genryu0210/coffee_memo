@@ -13,21 +13,11 @@ class CoffeeApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      localizationsDelegates: [
-        GlobalMaterialLocalizations.delegate,
-        GlobalWidgetsLocalizations.delegate,
-    ],
-    // （3） 対応する言語の宣言
-    supportedLocales: [
-        Locale('ja',''),
-        Locale('en',''),
-    ],
       theme: ThemeData(
         textTheme: TextTheme(
-          bodyMedium: TextStyle(
-            fontFamily: 'San Francisco',
-          )
-        ),
+            bodyMedium: TextStyle(
+          fontFamily: 'San Francisco',
+        )),
         colorScheme: ColorScheme.light(
           primary: Color(0xFF58C0EB),
           background: Colors.white,

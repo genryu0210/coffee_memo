@@ -16,15 +16,9 @@ class _InsertScreenState extends State<InsertScreen> {
   Map<String, TextEditingController> controllers = {};
   File? _storedImage;
   final Map japaneseTitles = Utils().japaneseTitles;
+  int bodyIndex = -1;
+  int acidityIndex = -1;
   DateTime selectedDate = DateTime.now();
-  Map<String, int> tasteIndexMap = {
-    'overall': -1,
-    'body': -1,
-    'acidity': -1,
-    'sweetness': -1, // 例として「甘みの指数」を追加
-    'bitterness': -1, // 「苦味の指数」を追加
-    'aroma': -1, // 「香りの指数」を追加
-  };
 
   @override
   void initState() {
@@ -33,7 +27,8 @@ class _InsertScreenState extends State<InsertScreen> {
   }
 
   void _initControllers() {
-    final columns = dbHelper.journalColumns
+    // DatabaseHelperからcoffeebeansColumnsリストを取得
+    final columns = dbHelper.coffeebeansColumns
         .where((column) => column != 'id' && column != 'imagePath')
         .toList();
 
@@ -45,9 +40,9 @@ class _InsertScreenState extends State<InsertScreen> {
 
   Future<void> _addCoffeeBeanWithImage() async {
     String imagePath = _storedImage?.path ?? '';
-    if (controllers['usedBeans']?.text.isEmpty ?? true) {
+    if (controllers['name']?.text.isEmpty ?? true) {
       const snackBar = SnackBar(
-        content: Text('使用した豆を入力してください'),
+        content: Text('名前を入力してください'),
         duration: Duration(seconds: 2),
       );
       ScaffoldMessenger.of(context).showSnackBar(snackBar);
@@ -56,13 +51,9 @@ class _InsertScreenState extends State<InsertScreen> {
     Map<String, dynamic> row = {
       for (var entry in controllers.entries) entry.key: entry.value.text,
       'imagePath': imagePath, // 特別な扱いが必要なフィールドを追加
-      'overallScore': tasteIndexMap['overall'],
-      'acidityScore': tasteIndexMap['acidity'],
-      'aromaScore': tasteIndexMap['aroma'],
-      'bitternessScore': tasteIndexMap['bitter'],
-      'bodyScore': tasteIndexMap['body'],
-      'sweetnessScore': tasteIndexMap['sweetness'],
-      'brewDate': DateFormat('yyyy-MM-dd').format(selectedDate),
+      'body': bodyIndex,
+      'acidity': acidityIndex,
+      'purchaseDate': DateFormat('yyyy-MM-dd').format(selectedDate),
       'updateDate': DateTime.now().toString()
     };
     await dbHelper.insert(table, row);
@@ -147,7 +138,7 @@ class _InsertScreenState extends State<InsertScreen> {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(
-          japaneseTitles['${taste}Score'],
+          japaneseTitles[taste],
           style: TextStyle(fontSize: 16),
         ),
         SizedBox(
@@ -164,7 +155,7 @@ class _InsertScreenState extends State<InsertScreen> {
   }
 
   Widget _buildBodyIcon(String taste, int level) {
-    int currentIndex = tasteIndexMap[taste]!;
+    int currentIndex = _getCurrentIndex(taste);
     return IconButton(
       icon: Icon(
         Icons.local_cafe,
@@ -172,16 +163,34 @@ class _InsertScreenState extends State<InsertScreen> {
       ),
       onPressed: () {
         setState(() {
-          tasteIndexMap[taste] = level;
+          _setTasteIndex(taste, level);
         });
       },
     );
   }
 
-  Widget tasteScores(String taste) {
-    return Column(
-      children: [customTextField('${taste}Memo', 400), tasteLevel(taste)],
-    );
+  int _getCurrentIndex(String taste) {
+    switch (taste) {
+      case 'body':
+        return bodyIndex;
+      case 'acidity':
+        return acidityIndex;
+      // 他の味覚の場合も同様に追加
+      default:
+        return -1;
+    }
+  }
+
+  void _setTasteIndex(String taste, int level) {
+    switch (taste) {
+      case 'body':
+        bodyIndex = level;
+        break;
+      case 'acidity':
+        acidityIndex = level;
+        break;
+      // 他の味覚の場合も同様に追加
+    }
   }
 
   @override
@@ -207,7 +216,7 @@ class _InsertScreenState extends State<InsertScreen> {
                     mainAxisSize: MainAxisSize.min,
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      customTextField('usedBeans', screenWidth * 0.5),
+                      customTextField('name', screenWidth * 0.5),
                       Padding(
                         padding: const EdgeInsets.only(top: 8.0),
                         child: Text(
@@ -240,6 +249,7 @@ class _InsertScreenState extends State<InsertScreen> {
                 ),
               ],
             ),
+            customTextField('description', screenWidth * 0.9),
             Row(
               mainAxisSize: MainAxisSize.min,
               children: [
@@ -250,7 +260,7 @@ class _InsertScreenState extends State<InsertScreen> {
                   padding: EdgeInsets.only(right: 16.0),
                 ),
                 Expanded(
-                  child: customTextField('variety', screenWidth * 0.4),
+                  child: customTextField('price', screenWidth * 0.4),
                 ),
               ],
             ),
@@ -264,14 +274,20 @@ class _InsertScreenState extends State<InsertScreen> {
                 Expanded(child: customTextField('farmName', screenWidth * 0.5))
               ],
             ),
-            tasteScores('overall'),
-            tasteScores('acidity'),
-            tasteScores('aroma'),
-            tasteScores('bitterness'),
-            tasteScores('body'),
-            tasteScores('sweetness'),
+            customTextField('variety', screenWidth / 2 - 32),
+            Text(
+              '焙煎度',
+              style: TextStyle(fontSize: 16),
+            ),
+            tasteLevel(
+              'body',
+            ),
+            tasteLevel(
+              'acidity',
+            ),
             Row(
               children: [
+                customTextField('story', screenWidth / 2 - 32),
                 Expanded(
                   child: Container(),
                 ),
