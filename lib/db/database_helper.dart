@@ -89,7 +89,7 @@ class DatabaseHelper {
     await db.execute('''
   CREATE TABLE JournalTable (
     id INTEGER PRIMARY KEY,
-    usedBeans TEXT, 
+    usedBeans INTEGER, 
     imagePath TEXT,
     deviceUsed TEXT,
     brewDate TEXT,

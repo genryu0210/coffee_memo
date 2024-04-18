@@ -2,11 +2,9 @@ import 'dart:io';
 import 'dart:ui';
 
 import 'package:coffee_memo/screen/cb_edit_screen.dart';
-import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:coffee_memo/db/database_helper.dart';
 import 'package:coffee_memo/utils.dart';
-import 'package:flutter/rendering.dart';
 import 'package:flutter/widgets.dart';
 
 class DetailScreen extends StatefulWidget {
@@ -21,7 +19,6 @@ class _DetailScreenState extends State<DetailScreen> {
   final dbHelper = DatabaseHelper.instance;
   final table = 'CoffeeBeansTable';
   Map<String, dynamic>? itemDetails;
-  Map<String, TextEditingController> controllers = {};
   final japaneseTitles = Utils().japaneseTitles;
   late String roastLevel;
   late int bodyLevel;
@@ -37,23 +34,16 @@ class _DetailScreenState extends State<DetailScreen> {
     final data = await dbHelper.queryItemById(table, widget.itemId);
     setState(() {
       itemDetails = data;
-      _initControllers();
     });
-  }
-
-  void _initControllers() {
-    itemDetails?.forEach((key, value) {
-      controllers[key] = TextEditingController(text: value.toString());
-    });
-    if (controllers["roastLevel"]!.text != '-1') {
+            if (itemDetails!["roastLevel"]! != -1){
       roastLevel =
-          '${Utils().roastLevels[(int.parse(controllers["roastLevel"]!.text))]}ロースト';
+          '${Utils().roastLevels[itemDetails!["roastLevel"]]}ロースト';
     } else {
       roastLevel = '';
     }
 
-    bodyLevel = int.parse(controllers['body']!.text);
-    acidityLevel = int.parse(controllers['acidity']!.text);
+    // bodyLevel = int.parse(itemDetails!['body']);
+    // acidityLevel = int.parse(itemDetails!['acidity']);
   }
 
   void _showDeleteDialog(BuildContext context, String name) {
@@ -91,14 +81,6 @@ class _DetailScreenState extends State<DetailScreen> {
         );
       },
     );
-  }
-
-  Widget Function(String key, double value,
-          Map<String, TextEditingController> controllers) customTextField =
-      Utils().customTextField;
-
-  Widget makeCustomTextField(String key, double value) {
-    return customTextField(key, value, controllers);
   }
 
   Widget textBox(String key) {
@@ -157,7 +139,7 @@ class _DetailScreenState extends State<DetailScreen> {
   }
 
   Widget _buildBodyIcon(String taste, int level) {
-    int currentIndex = _getCurrentIndex(taste);
+    int currentIndex = itemDetails![taste];
     return IconButton(
       icon: Icon(
         Icons.star,
@@ -268,9 +250,10 @@ class _DetailScreenState extends State<DetailScreen> {
             ),
             tasteLevel('body'),
             tasteLevel('acidity'),
+
+                textBox('story'),
             Row(
               children: [
-                makeCustomTextField('story', screenWidth / 2 - 32),
                 Expanded(
                   child: Container(),
                 ),

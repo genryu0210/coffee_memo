@@ -4,6 +4,7 @@ import 'package:coffee_memo/screen/jn_edit_screen.dart';
 import 'package:coffee_memo/utils.dart';
 import 'package:flutter/material.dart';
 import 'package:coffee_memo/db/database_helper.dart';
+import 'package:intl/intl.dart';
 
 class DetailScreen extends StatefulWidget {
   final int itemId;
@@ -17,10 +18,16 @@ class _DetailScreenState extends State<DetailScreen> {
   final dbHelper = DatabaseHelper.instance;
   final table = 'JournalTable';
   Map<String, dynamic>? itemDetails;
-  Map<String, TextEditingController> controllers = {};
+  Map<String, dynamic>? _beanDetails;
   final japaneseTitles = Utils().japaneseTitles;
-  late int bodyLevel;
-  late int acidityLevel;
+  Map<String, int> tasteIndexMap = {
+    'overall': -1,
+    'body': -1,
+    'acidity': -1,
+    'sweetness': -1, // 例として「甘みの指数」を追加
+    'bitterness': -1, // 「苦味の指数」を追加
+    'aroma': -1, // 「香りの指数」を追加
+  };
 
   @override
   void initState() {
@@ -32,19 +39,19 @@ class _DetailScreenState extends State<DetailScreen> {
     final data = await dbHelper.queryItemById(table, widget.itemId);
     setState(() {
       itemDetails = data;
-      _initControllers();
     });
+    getBeansDetails();
   }
 
-  void _initControllers() {
-    itemDetails?.forEach((key, value) {
-      controllers[key] = TextEditingController(text: value.toString());
-    });
-
-    bodyLevel = int.parse(controllers['body']!.text);
-    acidityLevel = int.parse(controllers['acidity']!.text);
+  void getBeansDetails() async {
+    if (itemDetails!['usedBeans'] != null) {
+      var beanDetails = await dbHelper.queryItemById(
+          'CoffeeBeansTable', itemDetails!['usedBeans']);
+      setState(() {
+        _beanDetails = beanDetails;
+      });
+    }
   }
-
 
   void _showDeleteDialog(BuildContext context) {
     // データベース削除の確認ダイアログを表示
@@ -81,14 +88,6 @@ class _DetailScreenState extends State<DetailScreen> {
         );
       },
     );
-  }
-
-  Widget Function(String key, double value,
-          Map<String, TextEditingController> controllers) customTextField =
-      Utils().customTextField;
-
-  Widget makeCustomTextField(String key, double value) {
-    return customTextField(key, value, controllers);
   }
 
   Widget textBox(String key) {
@@ -130,7 +129,7 @@ class _DetailScreenState extends State<DetailScreen> {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(
-          japaneseTitles[taste]!,
+          japaneseTitles['${taste}Score']!,
           style: TextStyle(fontSize: 16),
         ),
         SizedBox(
@@ -147,28 +146,59 @@ class _DetailScreenState extends State<DetailScreen> {
   }
 
   Widget _buildBodyIcon(String taste, int level) {
-    int currentIndex = _getCurrentIndex(taste);
+    if(itemDetails!['${taste}Score'] == null) {
+      print("err");
+    }
+    int currentIndex = itemDetails!['${taste}Score'];
     return IconButton(
       icon: Icon(
-        Icons.star,
+        Icons.local_cafe,
         color: currentIndex >= level ? Colors.amber : Colors.grey,
       ),
-      onPressed: () {},
+      onPressed: () {
+      },
     );
   }
 
-  int _getCurrentIndex(String taste) {
-    switch (taste) {
-      case 'body':
-        return bodyLevel;
-      case 'acidity':
-        return acidityLevel;
-      // 他の味覚の場合も同様に追加
-      default:
-        return -1;
-    }
+  Widget tasteScores(String taste) {
+    return Column(
+      children: [textBox('${taste}Memo'), tasteLevel(taste)],
+    );
   }
-  
+
+  Widget coffeeBeanDetailsCard(Map<String, dynamic>? beanDetails) {
+    if (beanDetails == null || beanDetails.isEmpty) return SizedBox();
+    return Visibility(
+      visible: beanDetails.isNotEmpty,
+      child: Card(
+        margin: EdgeInsets.all(8),
+        child: Padding(
+          padding: EdgeInsets.all(8),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text("購入店: ${beanDetails['store']}"),
+              Text(
+                  "購入日: ${DateFormat('yyyy-MM-dd').format(DateTime.parse(beanDetails['purchaseDate']))}"),
+              Row(
+                children: [
+                  Expanded(child: Text("焙煎度: ${beanDetails['roastLevel']}")),
+                  Expanded(child: Text("精製方法: ${beanDetails['process']}")),
+                ],
+              ),
+              Row(
+                children: [
+                  Expanded(child: Text("ボディ: ${beanDetails['body']}")),
+                  Expanded(child: Text("酸味: ${beanDetails['acidity']}")),
+                ],
+              ),
+              // 他の必要な情報もここに追加
+            ],
+          ),
+        ),
+      ),
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -179,6 +209,7 @@ class _DetailScreenState extends State<DetailScreen> {
         body: Center(child: CircularProgressIndicator()), // ロード中のインジケータを表示
       );
     }
+
     return Scaffold(
       appBar: AppBar(),
       body: SingleChildScrollView(
@@ -190,74 +221,66 @@ class _DetailScreenState extends State<DetailScreen> {
             Row(
               children: [
                 Padding(
-                  padding: EdgeInsets.only(right: 16.0),
+                  padding: EdgeInsets.only(left: 8.0, right: 8.0),
                   child: beansImage(
                       itemDetails!['imagePath'].isNotEmpty
                           ? File(itemDetails!['imagePath'])
                           : null,
                       null),
                 ),
+                Container(
+                  padding: EdgeInsets.only(left: 16),
+                ),
                 Expanded(
                   child: Column(
                     mainAxisSize: MainAxisSize.min,
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      textBox('name'),
-                      textBox('purchaseDate'),
+                      Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        SizedBox(height: 8),
+        Text(
+          japaneseTitles['usedBeans']!,
+          style: TextStyle(fontSize: 16),
+        ),
+        Padding(
+          padding: const EdgeInsets.only(top: 4, bottom: 8),
+          child: Row(
+            children: [
+              Expanded(
+                child: Container(
+                  decoration: BoxDecoration(
+                      border: Border(
+                          bottom: BorderSide(color: Colors.black, width: 1.0))),
+                  child: Text(
+                    _beanDetails?['name'] ?? '',
+                    style: TextStyle(fontSize: 16),
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ],
+    ), 
+                      
+                      textBox('brewDate')
                     ],
                   ),
                 ),
               ],
             ),
-            textBox('description'),
-            Row(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Expanded(
-                  child: textBox('store'),
-                ),
-                Container(
-                  padding: EdgeInsets.only(right: 16.0),
-                ),
-                Expanded(
-                  child: textBox('price'),
-                ),
-              ],
-            ),
-            Row(
-              mainAxisSize: MainAxisSize.max,
-              children: [
-                Expanded(child: textBox('origin')),
-                Container(
-                  padding: EdgeInsets.only(right: 16.0),
-                ),
-                Expanded(child: textBox('farmName'))
-              ],
-            ),
+            coffeeBeanDetailsCard(_beanDetails),
+            tasteScores('overall'),
+            tasteScores('acidity'),
+            tasteScores('aroma'),
+            tasteScores('bitterness'),
+            tasteScores('body'),
+            tasteScores('sweetness'),
             Row(
               children: [
-                Expanded(child: textBox('variety')),
-                SizedBox(
-                  width: 16
-                ),
                 Expanded(child: Container()),
-              ],
-            ),
-            SizedBox(
-              height: 16,
-            ),
-            Text(
-              '焙煎度',
-              style: TextStyle(fontSize: 16),
-            ),
-            tasteLevel('body'),
-            tasteLevel('acidity'),
-            Row(
-              children: [
-                makeCustomTextField('story', screenWidth / 2 - 32),
-                Expanded(
-                  child: Container(),
-                ),
                 Row(
                   mainAxisAlignment: MainAxisAlignment.end,
                   children: [
@@ -273,8 +296,7 @@ class _DetailScreenState extends State<DetailScreen> {
                       child: const Text("編集"),
                     ),
                     ElevatedButton(
-                      onPressed: () =>
-                          _showDeleteDialog(context),
+                      onPressed: () => _showDeleteDialog(context),
                       child: const Text("削除"),
                     ),
                   ],

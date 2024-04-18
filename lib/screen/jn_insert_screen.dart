@@ -1,8 +1,6 @@
 import 'package:coffee_memo/utils.dart';
-import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:coffee_memo/db/database_helper.dart';
-import 'package:flutter/widgets.dart';
 import 'dart:io';
 import 'package:image_picker/image_picker.dart';
 import 'package:intl/intl.dart';
@@ -70,11 +68,12 @@ class _InsertScreenState extends State<InsertScreen> {
     String imagePath = _storedImage?.path ?? '';
     Map<String, dynamic> row = {
       for (var entry in controllers.entries) entry.key: entry.value.text,
-      'imagePath': imagePath, // 特別な扱いが必要なフィールドを追加
+      'usedBeans': _selectedBean,
+      'imagePath': imagePath,
       'overallScore': tasteIndexMap['overall'],
       'acidityScore': tasteIndexMap['acidity'],
       'aromaScore': tasteIndexMap['aroma'],
-      'bitternessScore': tasteIndexMap['bitter'],
+      'bitternessScore': tasteIndexMap['bitterness'],
       'bodyScore': tasteIndexMap['body'],
       'sweetnessScore': tasteIndexMap['sweetness'],
       'brewDate': DateFormat('yyyy-MM-dd').format(selectedDate),
@@ -95,6 +94,24 @@ class _InsertScreenState extends State<InsertScreen> {
       },
       items: _coffeeBeansDropdown,
     );
+  }
+
+  void _onCoffeeBeanSelected(String? newValue) async {
+    if (newValue == null) return;
+
+    setState(() {
+            _selectedBean = newValue;
+    });
+
+    // データベースから選択された豆の詳細を取得
+    var beanDetails = await dbHelper.queryItemById(
+        'CoffeeBeansTable', int.parse(_selectedBean!));
+
+    // 豆の詳細を表示するためのステート更新
+    setState(() {
+
+      _beanDetails = beanDetails;
+    });
   }
 
   Future<void> _selectImage() async {
@@ -243,23 +260,6 @@ class _InsertScreenState extends State<InsertScreen> {
         ),
       ),
     );
-  }
-
-  void _onCoffeeBeanSelected(String? newValue) async {
-    if (newValue == null) return;
-
-    setState(() {
-      _selectedBean = newValue;
-    });
-
-    // データベースから選択された豆の詳細を取得
-    var beanDetails = await dbHelper.queryItemById(
-        'CoffeeBeansTable', int.parse(_selectedBean!));
-
-    // 豆の詳細を表示するためのステート更新
-    setState(() {
-      _beanDetails = beanDetails;
-    });
   }
 
   @override
