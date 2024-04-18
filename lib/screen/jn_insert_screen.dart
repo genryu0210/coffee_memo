@@ -1,6 +1,8 @@
 import 'package:coffee_memo/utils.dart';
+import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:coffee_memo/db/database_helper.dart';
+import 'package:flutter/widgets.dart';
 import 'dart:io';
 import 'package:image_picker/image_picker.dart';
 import 'package:intl/intl.dart';
@@ -15,6 +17,10 @@ class _InsertScreenState extends State<InsertScreen> {
   final table = 'JournalTable';
   Map<String, TextEditingController> controllers = {};
   File? _storedImage;
+  List<DropdownMenuItem<String>> _coffeeBeansDropdown = [];
+  String? _selectedBean;
+  Map<String, dynamic> _beanDetails = {};
+
   final Map japaneseTitles = Utils().japaneseTitles;
   DateTime selectedDate = DateTime.now();
   Map<String, int> tasteIndexMap = {
@@ -30,6 +36,7 @@ class _InsertScreenState extends State<InsertScreen> {
   void initState() {
     super.initState();
     _initControllers();
+    _loadCoffeeBeans();
   }
 
   void _initControllers() {
@@ -43,16 +50,24 @@ class _InsertScreenState extends State<InsertScreen> {
     });
   }
 
+  Future<void> _loadCoffeeBeans() async {
+    final data = await dbHelper.queryAllRows('CoffeeBeansTable');
+    setState(() {
+      _coffeeBeansDropdown = data.map((bean) {
+        return DropdownMenuItem<String>(
+          value: bean['id'].toString(),
+          child: Text(bean['name']),
+        );
+      }).toList();
+
+      if (_coffeeBeansDropdown.isNotEmpty) {
+        _onCoffeeBeanSelected(_coffeeBeansDropdown[0].value);
+      }
+    });
+  }
+
   Future<void> _addCoffeeBeanWithImage() async {
     String imagePath = _storedImage?.path ?? '';
-    if (controllers['usedBeans']?.text.isEmpty ?? true) {
-      const snackBar = SnackBar(
-        content: Text('使用した豆を入力してください'),
-        duration: Duration(seconds: 2),
-      );
-      ScaffoldMessenger.of(context).showSnackBar(snackBar);
-      return;
-    }
     Map<String, dynamic> row = {
       for (var entry in controllers.entries) entry.key: entry.value.text,
       'imagePath': imagePath, // 特別な扱いが必要なフィールドを追加
@@ -68,6 +83,18 @@ class _InsertScreenState extends State<InsertScreen> {
     await dbHelper.insert(table, row);
 
     Navigator.of(context).pop(); // データ挿入後に画面を閉じる
+  }
+
+  Widget _coffeeBeanSelector() {
+    return DropdownButton<String>(
+      value: _selectedBean,
+      onChanged: (newValue) {
+        setState(() {
+          _onCoffeeBeanSelected(newValue);
+        });
+      },
+      items: _coffeeBeansDropdown,
+    );
   }
 
   Future<void> _selectImage() async {
@@ -115,7 +142,7 @@ class _InsertScreenState extends State<InsertScreen> {
       context: context,
       initialDate: selectedDate, // 最初に表示する日付
       firstDate: DateTime(2020), // 選択できる日付の最小値
-      lastDate: DateTime(2040), // 選択できる日付の最大値
+      lastDate: DateTime.now(), // 選択できる日付の最大値
     );
 
     if (picked != null) {
@@ -184,10 +211,60 @@ class _InsertScreenState extends State<InsertScreen> {
     );
   }
 
+  Widget coffeeBeanDetailsCard(Map<String, dynamic>? beanDetails) {
+    if (beanDetails == null || beanDetails.isEmpty) return SizedBox();
+    return Visibility(
+      visible: beanDetails.isNotEmpty,
+      child: Card(
+        margin: EdgeInsets.all(8),
+        child: Padding(
+          padding: EdgeInsets.all(8),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text("購入店: ${beanDetails['store']}"),
+              Text(
+                  "購入日: ${DateFormat('yyyy-MM-dd').format(DateTime.parse(beanDetails['purchaseDate']))}"),
+              Row(
+                children: [
+                  Expanded(child: Text("焙煎度: ${beanDetails['roastLevel']}")),
+                  Expanded(child: Text("精製方法: ${beanDetails['process']}")),
+                ],
+              ),
+              Row(
+                children: [
+                  Expanded(child: Text("ボディ: ${beanDetails['body']}")),
+                  Expanded(child: Text("酸味: ${beanDetails['acidity']}")),
+                ],
+              ),
+              // 他の必要な情報もここに追加
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  void _onCoffeeBeanSelected(String? newValue) async {
+    if (newValue == null) return;
+
+    setState(() {
+      _selectedBean = newValue;
+    });
+
+    // データベースから選択された豆の詳細を取得
+    var beanDetails = await dbHelper.queryItemById(
+        'CoffeeBeansTable', int.parse(_selectedBean!));
+
+    // 豆の詳細を表示するためのステート更新
+    setState(() {
+      _beanDetails = beanDetails;
+    });
+  }
+
   @override
   Widget build(BuildContext context) {
     double screenWidth = MediaQuery.of(context).size.width;
-
     return Scaffold(
       appBar: AppBar(),
       body: SingleChildScrollView(
@@ -199,19 +276,37 @@ class _InsertScreenState extends State<InsertScreen> {
             Row(
               children: [
                 Padding(
-                  padding: EdgeInsets.only(right: 16.0),
+                  padding: EdgeInsets.only(left: 8.0, right: 8.0),
                   child: beansImage(_storedImage, _selectImage),
+                ),
+                Container(
+                  padding: EdgeInsets.only(left: 16),
                 ),
                 Expanded(
                   child: Column(
                     mainAxisSize: MainAxisSize.min,
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      customTextField('usedBeans', screenWidth * 0.5),
                       Padding(
                         padding: const EdgeInsets.only(top: 8.0),
                         child: Text(
-                          '購入日',
+                          '使用した豆',
+                          style: TextStyle(fontSize: 16),
+                        ),
+                      ),
+                      _coffeeBeanSelector(),
+                      Container(
+                        width: double.infinity,
+                        height: 1.0,
+                        decoration: const BoxDecoration(
+                          border: Border(
+                              top: BorderSide(width: 1.0, color: Colors.black)),
+                        ),
+                      ),
+                      const Padding(
+                        padding: EdgeInsets.only(top: 8.0),
+                        child: Text(
+                          '抽出日',
                           style: TextStyle(fontSize: 16),
                         ),
                       ),
@@ -240,30 +335,7 @@ class _InsertScreenState extends State<InsertScreen> {
                 ),
               ],
             ),
-            Row(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Expanded(
-                  child: customTextField('store', screenWidth * 0.5),
-                ),
-                Container(
-                  padding: EdgeInsets.only(right: 16.0),
-                ),
-                Expanded(
-                  child: customTextField('variety', screenWidth * 0.4),
-                ),
-              ],
-            ),
-            Row(
-              mainAxisSize: MainAxisSize.max,
-              children: [
-                Expanded(child: customTextField('origin', screenWidth * 0.5)),
-                Container(
-                  padding: EdgeInsets.only(right: 16.0),
-                ),
-                Expanded(child: customTextField('farmName', screenWidth * 0.5))
-              ],
-            ),
+            coffeeBeanDetailsCard(_beanDetails),
             tasteScores('overall'),
             tasteScores('acidity'),
             tasteScores('aroma'),
@@ -272,9 +344,7 @@ class _InsertScreenState extends State<InsertScreen> {
             tasteScores('sweetness'),
             Row(
               children: [
-                Expanded(
-                  child: Container(),
-                ),
+                Expanded(child: Container()),
                 Padding(
                   padding: const EdgeInsets.only(top: 16),
                   child: ElevatedButton(
@@ -297,9 +367,3 @@ class _InsertScreenState extends State<InsertScreen> {
     );
   }
 }
-
-List<Map<String, dynamic>> _coffeeBeans = [];
-Map<String, TextEditingController> controllers = {};
-File? _storedImage;
-String _selectedBean = '';
-final Map japaneseTitles = Utils().japaneseTitles;
