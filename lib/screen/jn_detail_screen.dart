@@ -45,11 +45,17 @@ class _DetailScreenState extends State<DetailScreen> {
 
   void getBeansDetails() async {
     if (itemDetails!['usedBeans'] != null) {
-      var beanDetails = await dbHelper.queryItemById(
-          'CoffeeBeansTable', itemDetails!['usedBeans']);
-      setState(() {
-        _beanDetails = beanDetails;
-      });
+      try {
+        var beanDetails = await dbHelper.queryItemById(
+            'CoffeeBeansTable', itemDetails!['usedBeans']);
+        setState(() {
+          _beanDetails = beanDetails;
+        });
+      } catch (e) {
+        setState(() {
+          _beanDetails = null;
+        });
+      }
     }
   }
 
@@ -146,7 +152,7 @@ class _DetailScreenState extends State<DetailScreen> {
   }
 
   Widget _buildBodyIcon(String taste, int level) {
-    if(itemDetails!['${taste}Score'] == null) {
+    if (itemDetails!['${taste}Score'] == null) {
       print("err");
     }
     int currentIndex = itemDetails!['${taste}Score'];
@@ -155,14 +161,37 @@ class _DetailScreenState extends State<DetailScreen> {
         Icons.local_cafe,
         color: currentIndex >= level ? Colors.amber : Colors.grey,
       ),
-      onPressed: () {
-      },
+      onPressed: () {},
     );
   }
 
   Widget tasteScores(String taste) {
     return Column(
       children: [textBox('${taste}Memo'), tasteLevel(taste)],
+    );
+  }
+
+  Widget brewMethodsTextField() {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: <Widget>[
+        SizedBox(height: 8),
+        Text(japaneseTitles['brewMethods']!, style: TextStyle(fontSize: 16)),
+        SizedBox(height: 8),
+        Container(
+          width: double.infinity,
+  padding: EdgeInsets.all(8.0), // パディングを設定
+  decoration: BoxDecoration(
+    border: Border.all(color: Colors.black), // 境界線を設定
+    borderRadius: BorderRadius.circular(15.0), // 角を丸くする
+    color: Colors.white, // 背景色を白に設定
+  ),
+  child: Text(
+    itemDetails!['brewMethods'], // 表示するテキスト
+    style: TextStyle(fontSize: 16), // テキストスタイル
+  ),
+)
+      ],
     );
   }
 
@@ -237,34 +266,35 @@ class _DetailScreenState extends State<DetailScreen> {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        SizedBox(height: 8),
-        Text(
-          japaneseTitles['usedBeans']!,
-          style: TextStyle(fontSize: 16),
-        ),
-        Padding(
-          padding: const EdgeInsets.only(top: 4, bottom: 8),
-          child: Row(
-            children: [
-              Expanded(
-                child: Container(
-                  decoration: BoxDecoration(
-                      border: Border(
-                          bottom: BorderSide(color: Colors.black, width: 1.0))),
-                  child: Text(
-                    _beanDetails?['name'] ?? '',
-                    style: TextStyle(fontSize: 16),
-                  ),
-                ),
-              ),
-            ],
-          ),
-        ),
-      ],
-    ), 
-                      
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          SizedBox(height: 8),
+                          Text(
+                            japaneseTitles['usedBeans']!,
+                            style: TextStyle(fontSize: 16),
+                          ),
+                          Padding(
+                            padding: const EdgeInsets.only(top: 4, bottom: 8),
+                            child: Row(
+                              children: [
+                                Expanded(
+                                  child: Container(
+                                    decoration: BoxDecoration(
+                                        border: Border(
+                                            bottom: BorderSide(
+                                                color: Colors.black,
+                                                width: 1.0))),
+                                    child: Text(
+                                      _beanDetails?['name'] ?? '',
+                                      style: TextStyle(fontSize: 16),
+                                    ),
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ],
+                      ),
                       textBox('brewDate')
                     ],
                   ),
@@ -272,6 +302,7 @@ class _DetailScreenState extends State<DetailScreen> {
               ],
             ),
             coffeeBeanDetailsCard(_beanDetails),
+            brewMethodsTextField(),
             tasteScores('overall'),
             tasteScores('acidity'),
             tasteScores('aroma'),

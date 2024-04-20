@@ -23,6 +23,7 @@ class Utils {
     'usedBeans': '使用した豆',
     'deviceUsed': '使用器具',
     'brewDate': '抽出日',
+    'brewMethods':  '抽出方法', 
     'overallScore': '総合点数',
     'overallMemo': '総合メモ',
     'acidityScore': '酸味',

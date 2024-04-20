@@ -1,6 +1,7 @@
 import 'package:coffee_memo/utils.dart';
 import 'package:flutter/material.dart';
 import 'package:coffee_memo/db/database_helper.dart';
+import 'package:flutter/widgets.dart';
 import 'dart:io';
 import 'package:image_picker/image_picker.dart';
 import 'package:intl/intl.dart';
@@ -100,7 +101,7 @@ class _InsertScreenState extends State<InsertScreen> {
     if (newValue == null) return;
 
     setState(() {
-            _selectedBean = newValue;
+      _selectedBean = newValue;
     });
 
     // データベースから選択された豆の詳細を取得
@@ -109,7 +110,6 @@ class _InsertScreenState extends State<InsertScreen> {
 
     // 豆の詳細を表示するためのステート更新
     setState(() {
-
       _beanDetails = beanDetails;
     });
   }
@@ -224,7 +224,11 @@ class _InsertScreenState extends State<InsertScreen> {
 
   Widget tasteScores(String taste) {
     return Column(
-      children: [customTextField('${taste}Memo', 400), tasteLevel(taste)],
+      children: [
+        customTextField('${taste}Memo', 400),
+        SizedBox(height: 8.0),
+        tasteLevel(taste),
+      ],
     );
   }
 
@@ -336,6 +340,29 @@ class _InsertScreenState extends State<InsertScreen> {
               ],
             ),
             coffeeBeanDetailsCard(_beanDetails),
+            Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: <Widget>[
+                SizedBox(height: 8),
+                Text(japaneseTitles['brewMethods'],
+                    style: TextStyle(fontSize: 16)),
+                SizedBox(height: 8),
+                TextFormField(
+                  controller: controllers['brewMethods'],
+                  decoration: InputDecoration(
+                    hintText: "ここに抽出方法を記入してください",
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.all(
+                        Radius.circular(15),
+                      ),
+                    ),
+                  ),
+                  keyboardType: TextInputType.multiline,
+                  maxLines: null,
+                  autofocus: false,
+                ),
+              ],
+            ),
             tasteScores('overall'),
             tasteScores('acidity'),
             tasteScores('aroma'),
