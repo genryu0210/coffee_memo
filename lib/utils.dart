@@ -47,6 +47,24 @@ class Utils {
     'フレンチ',
     'イタリアン'
   ];
+  final List<String> processes = [
+    'ナチュラル',
+    'ウォッシュド',
+    'ハニー',
+    'アナエロビック',
+    'その他'
+  ];
+  final List<String> bodyLevels = [
+    'Low',
+    'Medium',
+    'Full',
+  ];
+  
+  final List<String> acidityLevels = [
+    'Low',
+    'Medium',
+    'High',
+  ];
 
   static Widget beansImage(File? _storedImage, VoidCallback? onTap) {
     Image imageFile = _storedImage != null

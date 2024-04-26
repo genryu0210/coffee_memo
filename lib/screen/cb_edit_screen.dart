@@ -1,5 +1,6 @@
 import 'dart:io';
 
+import 'package:coffee_memo/widgets.dart';
 import 'package:flutter/material.dart';
 import 'package:coffee_memo/db/database_helper.dart';
 import 'package:image_picker/image_picker.dart';
@@ -98,49 +99,6 @@ class _EditScreenState extends State<EditScreen> {
     }
   }
 
-  Future<void> _selectImage() async {
-    // ボトムシートを表示する関数
-    showModalBottomSheet(
-      context: context,
-      builder: (BuildContext context) {
-        return SafeArea(
-          child: Wrap(
-            children: <Widget>[
-              ListTile(
-                  leading: Icon(Icons.photo_camera),
-                  title: Text('カメラで撮影'),
-                  onTap: () {
-                    _getImage(ImageSource.camera);
-                    Navigator.of(context).pop();
-                  }),
-              ListTile(
-                leading: Icon(Icons.photo_library),
-                title: Text('ギャラリーから選択'),
-                onTap: () {
-                  _getImage(ImageSource.gallery);
-                  Navigator.of(context).pop();
-                },
-              ),
-            ],
-          ),
-        );
-      },
-    );
-  }
-
-  Future<void> _getImage(ImageSource source) async {
-    final pickedFile =
-        await ImagePicker().pickImage(source: source, maxWidth: 600);
-    if (pickedFile != null) {
-      setState(() {
-        _selectedImage = File(pickedFile.path);
-      });
-    }
-  }
-
-  Widget Function(File? _storedImage, VoidCallback? onTap) beansImage =
-      Utils.beansImage;
-
   Widget customTextField(String key, double value) {
     return SizedBox(
       width: value,
@@ -210,6 +168,13 @@ class _EditScreenState extends State<EditScreen> {
       // 他の味覚の場合も同様に追加
     }
   }
+  
+
+  void _handleImage(File pickedImage) {
+    setState(() {
+      _selectedImage = pickedImage;
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -226,10 +191,9 @@ class _EditScreenState extends State<EditScreen> {
               children: [
                 Padding(
                   padding: EdgeInsets.only(right: 16.0),
-                  child: itemDetails?['imagePath'] != null &&
-                          itemDetails!['imagePath'].isNotEmpty
-                      ? beansImage(_selectedImage, _selectImage)
-                      : beansImage(null, _selectImage),
+                  child: ImagePickerWidget(
+                    onImagePicked: _handleImage,storedImage: _selectedImage,
+                  ),
                 ),
                 Expanded(
                   child: Column(

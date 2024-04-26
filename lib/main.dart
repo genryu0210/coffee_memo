@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:coffee_memo/screen/main_screen.dart';
-import 'package:flutter_localizations/flutter_localizations.dart';
 
 void main() {
   // debugPaintSizeEnabled =true;
@@ -17,6 +16,7 @@ class CoffeeApp extends StatelessWidget {
         textTheme: TextTheme(
             bodyMedium: TextStyle(
           fontFamily: 'San Francisco',
+          fontSize: 16, 
         )),
         colorScheme: ColorScheme.light(
           primary: Color(0xFF58C0EB),
@@ -25,7 +25,8 @@ class CoffeeApp extends StatelessWidget {
         primaryColor: Color(0xFF58C0EB), // 指定された青色を使う
         scaffoldBackgroundColor: Colors.white, // 背景色は白
         appBarTheme: AppBarTheme(
-          color: Color(0xFF58C0EB),
+          color: Colors.transparent,
+          elevation: 0,
         ),
         // textTheme: TextTheme(
         // bodyText2: TextStyle(color: Colors.black),

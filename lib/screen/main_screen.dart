@@ -26,7 +26,7 @@ class _MainScreenState extends State<MainScreen> {
     return Scaffold(
       appBar: AppBar(
         title: Text('Coffee Memo'),
-        backgroundColor: Theme.of(context).primaryColor,
+        // backgroundColor: Theme.of(context).primaryColor,
       ),
       drawer: Drawer(
         child: ListView(
@@ -35,7 +35,7 @@ class _MainScreenState extends State<MainScreen> {
             DrawerHeader(
               child: Text('メニュー'),
               decoration: BoxDecoration(
-                color: Theme.of(context).primaryColor,
+                // color: Theme.of(context).primaryColor,
               ),
             ),
             // 他のメニューオプションもここに追加
