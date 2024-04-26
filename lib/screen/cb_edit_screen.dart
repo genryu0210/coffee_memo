@@ -1,11 +1,11 @@
 import 'dart:io';
 
+import 'package:coffee_memo/styles.dart';
 import 'package:coffee_memo/widgets.dart';
 import 'package:flutter/material.dart';
 import 'package:coffee_memo/db/database_helper.dart';
-import 'package:image_picker/image_picker.dart';
 import 'package:intl/intl.dart';
-import '../utils.dart';
+import 'package:coffee_memo/utils.dart';
 
 class EditScreen extends StatefulWidget {
   final int itemId;
@@ -24,10 +24,12 @@ class _EditScreenState extends State<EditScreen> {
   Map<String, TextEditingController> controllers = {};
   final japaneseTitles = Utils().japaneseTitles;
   final List<String> roastLevels = Utils().roastLevels;
+  final List<String> processes = Utils().processes;
   DateTime purchaseDate = DateTime.now();
-  int roastIndex = -1;
+  String? RoastLevel;
   int bodyIndex = -1;
   int acidityIndex = -1;
+  String? selectedProcess;
 
   @override
   void initState() {
@@ -39,7 +41,7 @@ class _EditScreenState extends State<EditScreen> {
     final data = await dbHelper.queryItemById(table, widget.itemId);
     setState(await () {
       itemDetails = data;
-      _selectedImage = itemDetails!['imagePath'] != null
+      _selectedImage = itemDetails!['imagePath'] != ''
           ? File(itemDetails!['imagePath'])
           : null;
     });
@@ -47,9 +49,12 @@ class _EditScreenState extends State<EditScreen> {
       controllers[key] = TextEditingController(text: value.toString());
     });
     purchaseDate = DateTime.parse(itemDetails!['purchaseDate']);
-    roastIndex = int.parse(controllers['roastLevel']!.text);
+    RoastLevel = int.parse(controllers['roastLevel']!.text) == -1
+        ? null
+        : roastLevels[int.parse(controllers['roastLevel']!.text)];
     bodyIndex = int.parse(controllers['body']!.text);
     acidityIndex = int.parse(controllers['acidity']!.text);
+    selectedProcess = itemDetails!['process'];
   }
 
   @override
@@ -73,259 +78,297 @@ class _EditScreenState extends State<EditScreen> {
       row[key] = value.text; // 各フィールドの値をマップに追加
     });
     row['imagePath'] = imagePath;
-    row['roastLevel'] = roastIndex;
+    row['roastLevel'] =
+        RoastLevel != null ? roastLevels.indexOf(RoastLevel!) : -1;
     row['body'] = bodyIndex;
     row['acidity'] = acidityIndex;
     row['purchaseDate'] = DateFormat('yyyy-MM-dd').format(purchaseDate);
     row['updateDate'] = DateTime.now().toString();
+    row['process'] = selectedProcess;
 
     await dbHelper.update(table, row);
     Navigator.of(context).pop(); // 更新後に画面を閉じる
   }
 
-  Future<void> _selectDate(BuildContext context) async {
-    final DateTime? picked = await showDatePicker(
-      context: context,
-      initialDate: purchaseDate, // 最初に表示する日付
-      firstDate: DateTime(2020), // 選択できる日付の最小値
-      lastDate: DateTime(2040), // 選択できる日付の最大値
-    );
-
-    if (picked != null) {
-      setState(() {
-        // 選択された日付を変数に代入
-        purchaseDate = picked;
-      });
-    }
-  }
-
-  Widget customTextField(String key, double value) {
-    return SizedBox(
-      width: value,
-      child: TextField(
-        controller: controllers[key],
-        decoration: InputDecoration(labelText: japaneseTitles[key]),
-      ),
-    );
-  }
-
-  Widget tasteLevel(String taste) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(
-          japaneseTitles[taste]!,
-          style: TextStyle(fontSize: 16),
-        ),
-        SizedBox(
-          height: 34,
-          child: Row(
-            children: List.generate(
-              5,
-              (index) => _buildBodyIcon(taste, index + 1),
-            ),
-          ),
-        )
-      ],
-    );
-  }
-
-  Widget _buildBodyIcon(String taste, int level) {
-    int currentIndex = _getCurrentIndex(taste);
-    return IconButton(
-      icon: Icon(
-        Icons.star,
-        color: currentIndex >= level ? Colors.amber : Colors.grey,
-      ),
-      onPressed: () {
-        setState(() {
-          _setTasteIndex(taste, level);
-        });
-      },
-    );
-  }
-
-  int _getCurrentIndex(String taste) {
-    switch (taste) {
-      case 'body':
-        return bodyIndex;
-      case 'acidity':
-        return acidityIndex;
-      // 他の味覚の場合も同様に追加
-      default:
-        return -1;
-    }
-  }
-
-  void _setTasteIndex(String taste, int level) {
-    switch (taste) {
-      case 'body':
-        bodyIndex = level;
-        break;
-      case 'acidity':
-        acidityIndex = level;
-        break;
-      // 他の味覚の場合も同様に追加
-    }
-  }
-  
-
-  void _handleImage(File pickedImage) {
-    setState(() {
-      _selectedImage = pickedImage;
-    });
-  }
-
   @override
   Widget build(BuildContext context) {
     double screenWidth = MediaQuery.of(context).size.width;
+    if (itemDetails == null) {
+      return Scaffold(
+        body: Center(
+          child: CircularProgressIndicator(),
+        ),
+      );
+    }
+
     return Scaffold(
+      extendBodyBehindAppBar: true,
       appBar: AppBar(),
       body: SingleChildScrollView(
-        padding: EdgeInsets.fromLTRB(16, 16, 32, 8),
+        padding: EdgeInsets.fromLTRB(16, 116, 32, 8),
         child: Column(
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
+          children: <Widget>[
             Row(
               children: [
                 Padding(
                   padding: EdgeInsets.only(right: 16.0),
                   child: ImagePickerWidget(
-                    onImagePicked: _handleImage,storedImage: _selectedImage,
-                  ),
+                      onImagePicked: (image) {
+                        setState(() {
+                          _selectedImage = image;
+                        });
+                      },
+                      storedImage: _selectedImage),
                 ),
                 Expanded(
                   child: Column(
                     mainAxisSize: MainAxisSize.min,
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      customTextField('name', screenWidth * 0.5),
-                      Padding(
-                        padding: const EdgeInsets.only(top: 8.0),
-                        child: Text(
-                          '購入日',
-                          style: TextStyle(fontSize: 16),
-                        ),
+                      CustomTextField(
+                        controller: controllers['name']!,
+                        itemKey: 'name',
+                        hintText: 'エチオピア イルガチェフェ',
+                        maxLines: 1,
                       ),
-                      Row(
-                        mainAxisAlignment: MainAxisAlignment.start,
-                        children: [
-                          Text(
-                            '${purchaseDate.year}/${purchaseDate.month}/${purchaseDate.day}',
-                            style: TextStyle(fontSize: 16),
-                          ),
-                          IconButton(
-                              onPressed: () => _selectDate(context),
-                              icon: Icon(Icons.calendar_today))
-                        ],
+                      SizedBox(height: 8),
+                      Text(
+                        '購入日',
+                        style: AppStyles.normalText,
                       ),
-                      Container(
-                        width: double.infinity,
-                        height: 1.0,
-                        decoration: BoxDecoration(
-                          border: Border(
-                              top: BorderSide(width: 1.0, color: Colors.black)),
-                        ),
-                      )
+                      DateTimePicker(
+                        selectedDate: purchaseDate,
+                        onDateSelected: (date) {
+                          setState(() {
+                            purchaseDate = date;
+                          });
+                        },
+                        firstDate: 2020,
+                        lastDate: 2040,
+                      ),
                     ],
                   ),
                 ),
               ],
             ),
-            customTextField('description', screenWidth * 0.9),
+            CustomTextField(
+                maxLines: null,
+                keyboardType: TextInputType.multiline,
+                controller: controllers['description']!,
+                itemKey: 'description',
+                hintText: '香り、高度、COE順位...'),
+            Container(height: 8),
+            CustomTextField(
+                controller: controllers['store']!,
+                itemKey: 'store',
+                hintText: 'ex:コーヒーキャロット'),
+            Container(height: 8),
             Row(
               mainAxisSize: MainAxisSize.min,
               children: [
                 Expanded(
-                  child: customTextField('store', screenWidth * 0.4),
+                  child: CustomTextField(
+                    controller: controllers['price']!,
+                    itemKey: 'price',
+                    hintText: '1500',
+                    keyboardType: TextInputType.number,
+                  ),
                 ),
-                Container(
-                  padding: EdgeInsets.only(right: 16.0),
-                ),
+                Container(width: 16),
                 Expanded(
-                  child: customTextField('price', screenWidth * 0.4),
-                ),
-              ],
-            ),
-            Row(
-              mainAxisSize: MainAxisSize.max,
-              children: [
-                Expanded(child: customTextField('origin', screenWidth * 0.5)),
-                Container(
-                  padding: EdgeInsets.only(right: 16.0),
-                ),
-                Expanded(child: customTextField('farmName', screenWidth * 0.5))
-              ],
-            ),
-            customTextField('variety', screenWidth / 2 - 32),
-            SizedBox(
-              height: 32,
-            ),
-            Text(
-              '焙煎度',
-              style: TextStyle(fontSize: 16),
-            ),
-            Container(
-              height: 34,
-              child: ListView.builder(
-                shrinkWrap: true,
-                scrollDirection: Axis.horizontal,
-                itemCount: roastLevels.length,
-                itemBuilder: (BuildContext context, int index) {
-                  return Container(
-                    decoration: BoxDecoration(
-                      border: Border.all(
-                        width: 1.0,
-                        color: roastIndex == index
-                            ? Theme.of(context).primaryColor
-                            : Colors.transparent,
-                      ),
-                      borderRadius: BorderRadius.circular(16.0),
-                    ),
-                    child: TextButton(
-                      onPressed: () {
-                        setState(
-                          () {
-                            roastIndex = index; // 選択されたインデックスを更新
-                          },
-                        );
-                      },
-                      child: Text(
-                        roastLevels[index],
-                        style: TextStyle(color: Colors.black),
-                      ),
-                    ),
-                  );
-                },
-              ),
-            ),
-            tasteLevel('body'),
-            tasteLevel('acidity'),
-            Row(
-              children: [
-                customTextField('story', screenWidth / 2 - 32),
-                Expanded(
-                  child: Container(),
-                ),
-                Padding(
-                  padding: const EdgeInsets.only(top: 16),
-                  child: ElevatedButton(
-                    onPressed: _updateItem,
-                    style: ButtonStyle(
-                      iconColor: MaterialStateProperty.resolveWith(
-                        (Set states) {
-                          return Theme.of(context).primaryColor;
-                        },
-                      ),
-                    ),
-                    child: Text('保存'),
+                  child: CustomTextField(
+                    controller: controllers['purchasedGrams']!,
+                    itemKey: 'purchasedGrams',
+                    hintText: '200',
+                    keyboardType: TextInputType.number,
                   ),
                 ),
               ],
             ),
+            Container(height: 8),
+            CustomTextField(
+              controller: controllers['origin']!,
+              itemKey: 'origin',
+              hintText: 'エチオピア',
+            ),
+            Container(height: 8),
+            CustomTextField(
+              controller: controllers['farmName']!,
+              itemKey: 'farmName',
+              hintText: 'エスメラルダ農園',
+            ),
+            Container(height: 8),
+            CustomTextField(
+              controller: controllers['variety']!,
+              itemKey: 'variety',
+              hintText: 'ティピカ種',
+            ),
+            Container(height: 8),
+            Column(
+              children: [
+                Row(
+                  children: [
+                    Expanded(child: Text('精製方法')),
+                    Container(width: 16),
+                    Expanded(child: Text('焙煎度')),
+                  ],
+                ),
+                Row(
+                  children: [
+                    Expanded(
+                      child: CustomDropdownMenu(
+                          selectedItem: selectedProcess,
+                          itemList: processes,
+                          onItemSelected: (String value) {
+                            setState(() {
+                              selectedProcess = value;
+                            });
+                          }),
+                    ),
+                    Container(width: 16),
+                    Expanded(
+                      child: CustomDropdownMenu(
+                        selectedItem: RoastLevel,
+                        itemList: roastLevels,
+                        onItemSelected: (String value) {
+                          setState(() {
+                            RoastLevel = value;
+                          });
+                        },
+                      ),
+                    ),
+                  ],
+                ),
+              ],
+            ),
+            SizedBox(height: 8),
+            Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  Utils().japaneseTitles['body']!, // または他の方法でタイトルを取得
+                  style: TextStyle(fontSize: 16),
+                ),
+                SizedBox(
+                  height: 40,
+                  child: Row(
+                    children: List.generate(
+                      3,
+                      (index) {
+                        int level = index + 1;
+                        Widget button = Expanded(
+                          flex: 1,
+                          child: Container(
+                            decoration: BoxDecoration(
+                              border: Border.all(
+                                color: bodyIndex == level
+                                    ? Theme.of(context).primaryColor
+                                    : Colors.black,
+                                width: bodyIndex == level ? 2 : 1,
+                              ),
+                              borderRadius: BorderRadius.circular(15),
+                            ),
+                            child: TextButton(
+                              child: Text(
+                                Utils().bodyLevels[index],
+                                style: AppStyles.normalText,
+                              ),
+                              onPressed: () {
+                                setState(() {
+                                  bodyIndex = level;
+                                });
+                              },
+                            ),
+                          ),
+                        );
+                        if (index == 1) {
+                          return button;
+                        }
+                        return button;
+                      },
+                    )
+                      ..insert(2, SizedBox(width: 8))
+                      ..insert(1, SizedBox(width: 8)),
+                  ),
+                )
+              ],
+            ),
+            SizedBox(height: 8),
+            Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  Utils().japaneseTitles['acidity']!, // または他の方法でタイトルを取得
+                  style: TextStyle(fontSize: 16),
+                ),
+                SizedBox(
+                  height: 40,
+                  child: Row(
+                    children: List.generate(
+                      3,
+                      (index) {
+                        int level = index + 1;
+                        return Expanded(
+                          child: Container(
+                            decoration: BoxDecoration(
+                              border: Border.all(
+                                color: acidityIndex == level
+                                    ? Theme.of(context).primaryColor
+                                    : Colors.black,
+                                width: acidityIndex == level ? 2 : 1,
+                              ),
+                              borderRadius: BorderRadius.circular(15),
+                            ),
+                            child: TextButton(
+                              child: Text(
+                                Utils().acidityLevels[index],
+                                style: AppStyles.normalText,
+                              ),
+                              onPressed: () {
+                                setState(() {
+                                  acidityIndex = level;
+                                });
+                              },
+                            ),
+                          ),
+                        );
+                      },
+                    )
+                      ..insert(2, SizedBox(width: 8))
+                      ..insert(1, SizedBox(width: 8)),
+                  ),
+                )
+              ],
+            ),
+            Container(height: 8),
+            CustomTextField(
+              controller: controllers['story']!,
+              itemKey: 'story',
+              hintText: 'エルインヘルト農園は、グアテマラ北西部ウエウエテナンゴ県の谷沿いに...',
+              keyboardType: TextInputType.multiline,
+              maxLines: null,
+            ),
+            SizedBox(height: 100),
           ],
         ),
+      ),
+      floatingActionButtonLocation: FloatingActionButtonLocation.centerFloat,
+      floatingActionButton: FloatingActionButton.extended(
+        backgroundColor: controllers['name']!.text.isEmpty
+            ? Colors.grey
+            : Theme.of(context).primaryColor,
+        label: Container(
+          width: screenWidth * 0.8,
+          child: Center(
+            child: Text(
+              '保存',
+              style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+            ),
+          ),
+        ),
+        onPressed: controllers['name']!.text.isEmpty ? () {} : _updateItem,
       ),
     );
   }

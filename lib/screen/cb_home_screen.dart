@@ -31,6 +31,7 @@ class _CoffeeBeansHomeScreenState extends State<CoffeeBeansHomeScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      extendBodyBehindAppBar: true,
       body: FutureBuilder<List<Map<String, dynamic>>>(
         future: dbHelper.queryAllRows(table),
         builder: (context, snapshot) {

@@ -22,15 +22,14 @@ class CoffeeApp extends StatelessWidget {
           primary: Color(0xFF58C0EB),
           background: Colors.white,
         ),
-        primaryColor: Color(0xFF58C0EB), // 指定された青色を使う
+        // primaryColor: Color(0xFF58C0EB), // 指定された青色を使う
         scaffoldBackgroundColor: Colors.white, // 背景色は白
         appBarTheme: AppBarTheme(
-          color: Colors.transparent,
+          backgroundColor: Colors.transparent,
+          shadowColor: Colors.transparent,
           elevation: 0,
+          scrolledUnderElevation: 0
         ),
-        // textTheme: TextTheme(
-        // bodyText2: TextStyle(color: Colors.black),
-        // ),
       ),
       home: MainScreen(),
     );

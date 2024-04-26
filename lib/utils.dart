@@ -38,6 +38,7 @@ class Utils {
     'sweetnessMemo': '甘味に関するメモ',
   };
   final List<String> roastLevels = [
+    ''
     'ライト',
     'シナモン',
     'ミディアム',
@@ -48,6 +49,7 @@ class Utils {
     'イタリアン'
   ];
   final List<String> processes = [
+    ''
     'ナチュラル',
     'ウォッシュド',
     'ハニー',

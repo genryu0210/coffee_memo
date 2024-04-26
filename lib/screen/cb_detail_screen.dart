@@ -171,9 +171,10 @@ class _DetailScreenState extends State<DetailScreen> {
       );
     }
     return Scaffold(
+      extendBodyBehindAppBar: true,
       appBar: AppBar(),
       body: SingleChildScrollView(
-        padding: EdgeInsets.fromLTRB(16, 16, 32, 8),
+        padding: EdgeInsets.fromLTRB(16, 116, 16, 8),
         child: Column(
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,
