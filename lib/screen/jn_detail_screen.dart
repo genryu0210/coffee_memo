@@ -2,6 +2,7 @@ import 'dart:io';
 
 import 'package:coffee_memo/screen/jn_edit_screen.dart';
 import 'package:coffee_memo/utils.dart';
+import 'package:coffee_memo/widgets.dart';
 import 'package:flutter/material.dart';
 import 'package:coffee_memo/db/database_helper.dart';
 import 'package:intl/intl.dart';
@@ -127,9 +128,6 @@ class _DetailScreenState extends State<DetailScreen> {
     );
   }
 
-  Widget Function(File? _storedImage, VoidCallback? onTap) beansImage =
-      Utils.beansImage;
-
   Widget tasteLevel(String taste) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -180,17 +178,17 @@ class _DetailScreenState extends State<DetailScreen> {
         SizedBox(height: 8),
         Container(
           width: double.infinity,
-  padding: EdgeInsets.all(8.0), // パディングを設定
-  decoration: BoxDecoration(
-    border: Border.all(color: Colors.black), // 境界線を設定
-    borderRadius: BorderRadius.circular(15.0), // 角を丸くする
-    color: Colors.white, // 背景色を白に設定
-  ),
-  child: Text(
-    itemDetails!['brewMethods'], // 表示するテキスト
-    style: TextStyle(fontSize: 16), // テキストスタイル
-  ),
-)
+          padding: EdgeInsets.all(8.0), // パディングを設定
+          decoration: BoxDecoration(
+            border: Border.all(color: Colors.black), // 境界線を設定
+            borderRadius: BorderRadius.circular(15.0), // 角を丸くする
+            color: Colors.white, // 背景色を白に設定
+          ),
+          child: Text(
+            itemDetails!['brewMethods'], // 表示するテキスト
+            style: TextStyle(fontSize: 16), // テキストスタイル
+          ),
+        )
       ],
     );
   }
@@ -251,11 +249,11 @@ class _DetailScreenState extends State<DetailScreen> {
               children: [
                 Padding(
                   padding: EdgeInsets.only(left: 8.0, right: 8.0),
-                  child: beansImage(
-                      itemDetails!['imagePath'].isNotEmpty
+                  child: BeansImage(
+                      storedImage: itemDetails!['imagePath'].isNotEmpty
                           ? File(itemDetails!['imagePath'])
                           : null,
-                      null),
+                      onTap: null),
                 ),
                 Container(
                   padding: EdgeInsets.only(left: 16),

@@ -158,6 +158,8 @@ class DatabaseHelper {
       'JournalTable',
       where: 'usedBeans = ?',
       whereArgs: [itemId],
-    );
+      orderBy: 'brewDate DESC',
+      limit: 5,
+        );
   }
 }

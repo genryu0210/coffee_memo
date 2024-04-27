@@ -1,4 +1,5 @@
 import 'package:coffee_memo/utils.dart';
+import 'package:coffee_memo/widgets.dart';
 import 'package:flutter/material.dart';
 import 'package:coffee_memo/db/database_helper.dart';
 import 'package:flutter/widgets.dart';
@@ -170,9 +171,6 @@ class _InsertScreenState extends State<InsertScreen> {
     }
   }
 
-  Widget Function(File? _storedImage, VoidCallback? onTap) beansImage =
-      Utils.beansImage;
-
   Widget customTextField(String key, double value) {
     return SizedBox(
       width: value,
@@ -281,7 +279,7 @@ class _InsertScreenState extends State<InsertScreen> {
               children: [
                 Padding(
                   padding: EdgeInsets.only(left: 8.0, right: 8.0),
-                  child: beansImage(_storedImage, _selectImage),
+                  child: BeansImage( storedImage: _storedImage,onTap: _selectImage),
                 ),
                 Container(
                   padding: EdgeInsets.only(left: 16),

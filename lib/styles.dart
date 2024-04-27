@@ -16,4 +16,8 @@ class AppStyles {
     fontSize: 16,
     color: Colors.grey,
   );
+    static const TextStyle cardText = TextStyle(
+    fontSize: 14,
+    color: Colors.black,
+  );
 }

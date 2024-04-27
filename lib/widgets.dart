@@ -310,3 +310,46 @@ class TasteLevelWidget extends StatelessWidget {
     );
   }
 }
+
+class BeansImage extends StatelessWidget {
+  final File? storedImage;
+  final VoidCallback? onTap;
+  final double? widgetSize;
+
+  const BeansImage({super.key,required this.storedImage,required this.onTap, this.widgetSize = 150});
+
+  static Widget beansImage(File? _storedImage, VoidCallback? onTap, double? widgetSize) {
+    Image imageFile = _storedImage != null
+        ? Image.file(
+            _storedImage,
+            width: widgetSize,
+            height: widgetSize,
+            fit: BoxFit.cover,
+          )
+        : Image.asset(
+            'assets/placeholder.jpg', // プレースホルダー画像へのパス
+            width: widgetSize,
+            height: widgetSize,
+            fit: BoxFit.cover,
+          );
+
+    return InkWell(
+      onTap: onTap != null ? onTap : () {},
+      child: Container(
+        decoration: BoxDecoration(
+          borderRadius: BorderRadius.circular(30),
+          border: Border.all(width: 1.0),
+        ),
+        child: ClipRRect(
+          borderRadius: BorderRadius.circular(30),
+          child: imageFile,
+        ),
+      ),
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return beansImage(storedImage, onTap, widgetSize);
+  }
+}
