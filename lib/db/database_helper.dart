@@ -152,4 +152,12 @@ class DatabaseHelper {
     Database db = await instance.database;
     return await db.delete(tablename, where: 'id = ?', whereArgs: [id]);
   }
+  Future<List<Map<String, dynamic>>> queryRecentActivities(int itemId) async {
+    Database db = await instance.database;
+    return await db.query(
+      'JournalTable',
+      where: 'usedBeans = ?',
+      whereArgs: [itemId],
+    );
+  }
 }

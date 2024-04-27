@@ -11,7 +11,7 @@ class _MainScreenState extends State<MainScreen> {
   int _selectedIndex = 0;
 
   static List<Widget> _widgetOptions = <Widget>[
-    JournalHomeScreen(), // コーヒー豆画面のウィジェット
+    JournalHomeScreen(),
     CoffeeBeansHomeScreen(),
   ];
 

@@ -2,10 +2,12 @@ import 'dart:io';
 import 'dart:ui';
 
 import 'package:coffee_memo/screen/cb_edit_screen.dart';
+import 'package:coffee_memo/styles.dart';
 import 'package:flutter/material.dart';
 import 'package:coffee_memo/db/database_helper.dart';
 import 'package:coffee_memo/utils.dart';
 import 'package:flutter/widgets.dart';
+import 'package:intl/intl.dart';
 
 class DetailScreen extends StatefulWidget {
   final int itemId;
@@ -20,9 +22,6 @@ class _DetailScreenState extends State<DetailScreen> {
   final table = 'CoffeeBeansTable';
   Map<String, dynamic>? itemDetails;
   final japaneseTitles = Utils().japaneseTitles;
-  late String roastLevel;
-  late int bodyLevel;
-  late int acidityLevel;
 
   @override
   void initState() {
@@ -35,15 +34,6 @@ class _DetailScreenState extends State<DetailScreen> {
     setState(() {
       itemDetails = data;
     });
-            if (itemDetails!["roastLevel"]! != -1){
-      roastLevel =
-          '${Utils().roastLevels[itemDetails!["roastLevel"]]}ロースト';
-    } else {
-      roastLevel = '';
-    }
-
-    // bodyLevel = int.parse(itemDetails!['body']);
-    // acidityLevel = int.parse(itemDetails!['acidity']);
   }
 
   void _showDeleteDialog(BuildContext context, String name) {
@@ -52,6 +42,7 @@ class _DetailScreenState extends State<DetailScreen> {
       context: context,
       builder: (BuildContext context) {
         return AlertDialog(
+          surfaceTintColor: Colors.transparent,
           title: Text('削除しますか？'),
           content: SingleChildScrollView(
             child: ListBody(
@@ -117,62 +108,37 @@ class _DetailScreenState extends State<DetailScreen> {
   Widget Function(File? _storedImage, VoidCallback? onTap) beansImage =
       Utils.beansImage;
 
-  Widget tasteLevel(String taste) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(
-          japaneseTitles[taste]!,
-          style: TextStyle(fontSize: 16),
-        ),
-        SizedBox(
-          height: 34,
-          child: Row(
-            children: List.generate(
-              5,
-              (index) => _buildBodyIcon(taste, index + 1),
-            ),
-          ),
-        )
-      ],
-    );
-  }
-
-  Widget _buildBodyIcon(String taste, int level) {
-    int currentIndex = itemDetails![taste];
-    return IconButton(
-      icon: Icon(
-        Icons.star,
-        color: currentIndex >= level ? Colors.amber : Colors.grey,
-      ),
-      onPressed: () {},
-    );
-  }
-
-  int _getCurrentIndex(String taste) {
-    switch (taste) {
-      case 'body':
-        return bodyLevel;
-      case 'acidity':
-        return acidityLevel;
-      // 他の味覚の場合も同様に追加
-      default:
-        return -1;
-    }
-  }
-
   @override
   Widget build(BuildContext context) {
     double screenWidth = MediaQuery.of(context).size.width;
     if (itemDetails == null) {
       return Scaffold(
         appBar: AppBar(),
-        body: Center(child: CircularProgressIndicator()), // ロード中のインジケータを表示
+        body:
+            const Center(child: CircularProgressIndicator()), // ロード中のインジケータを表示
       );
     }
     return Scaffold(
       extendBodyBehindAppBar: true,
-      appBar: AppBar(),
+      appBar: AppBar(
+        actions: [
+          IconButton(
+            icon: Icon(Icons.edit),
+            onPressed: () async {
+              await Navigator.of(context).push(
+                MaterialPageRoute(
+                    builder: (context) =>
+                        EditScreen(itemId: itemDetails!["id"])),
+              );
+              _refreshItem();
+            },
+          ),
+          IconButton(
+            icon: Icon(Icons.delete),
+            onPressed: () => _showDeleteDialog(context, itemDetails!['name']),
+          ),
+        ],
+      ),
       body: SingleChildScrollView(
         padding: EdgeInsets.fromLTRB(16, 116, 16, 8),
         child: Column(
@@ -193,94 +159,100 @@ class _DetailScreenState extends State<DetailScreen> {
                   child: Column(
                     mainAxisSize: MainAxisSize.min,
                     crossAxisAlignment: CrossAxisAlignment.start,
+                    mainAxisAlignment: MainAxisAlignment.start,
                     children: [
                       textBox('name'),
-                      textBox('purchaseDate'),
+                      textBox('store'),
                     ],
                   ),
                 ),
               ],
             ),
-            textBox('description'),
-            Row(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Expanded(
-                  child: textBox('store'),
-                ),
-                Container(
-                  padding: EdgeInsets.only(right: 16.0),
-                ),
-                Expanded(
-                  child: textBox('price'),
-                ),
-              ],
-            ),
-            Row(
-              mainAxisSize: MainAxisSize.max,
-              children: [
-                Expanded(child: textBox('origin')),
-                Container(
-                  padding: EdgeInsets.only(right: 16.0),
-                ),
-                Expanded(child: textBox('farmName'))
-              ],
-            ),
-            Row(
-              children: [
-                Expanded(child: textBox('variety')),
-                SizedBox(
-                  width: 16
-                ),
-                Expanded(child: Container()),
-              ],
-            ),
-            SizedBox(
-              height: 16,
-            ),
-            Text(
-              '焙煎度',
-              style: TextStyle(fontSize: 16),
-            ),
-            Padding(
-              padding: const EdgeInsets.symmetric(vertical: 8.0),
-              child: Text(
-                roastLevel,
-                style: TextStyle(fontSize: 16),
-              ),
-            ),
-            tasteLevel('body'),
-            tasteLevel('acidity'),
-
-                textBox('story'),
-            Row(
-              children: [
-                Expanded(
-                  child: Container(),
-                ),
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.end,
+            Card(
+              margin: EdgeInsets.all(8),
+              child: Padding(
+                padding: EdgeInsets.all(8),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    ElevatedButton(
-                      onPressed: () async {
-                        await Navigator.of(context).push(
-                          MaterialPageRoute(
-                              builder: (context) =>
-                                  EditScreen(itemId: itemDetails!["id"])),
-                        );
-                        _refreshItem();
-                      },
-                      child: const Text("編集"),
+                    // Text("購入店: ${itemDetails!['store']}"),
+                    Text(
+                        "購入日: ${DateFormat('yyyy/MM/dd').format(DateTime.parse(itemDetails!['purchaseDate']))}"),
+                    Row(
+                      children: [
+                        Expanded(
+                          child: Text(
+                              "焙煎度: ${itemDetails!['roastLevel'] != -1 ? Utils().roastLevels[itemDetails!['roastLevel']] : ''}"),
+                        ),
+                        Expanded(
+                            child:
+                                Text("精製方法: ${itemDetails!['process'] ?? ''}")),
+                      ],
                     ),
-                    ElevatedButton(
-                      onPressed: () =>
-                          _showDeleteDialog(context, itemDetails!['name']),
-                      child: const Text("削除"),
+                    Row(
+                      children: [
+                        Expanded(
+                            child: Text(
+                                "ボディ: ${itemDetails!['body'] != -1 ? Utils().bodyLevels[itemDetails!['body']] : ''}")),
+                        Expanded(
+                            child: Text(
+                                "酸味: ${itemDetails!['acidity'] != -1 ? Utils().acidityLevels[itemDetails!['acidity']] : ''}")),
+                      ],
                     ),
+                    Row(
+                      children: [
+                        Expanded(
+                          child: Text("価格: ${itemDetails!['price']}円"),
+                        ),
+                        Expanded(
+                            child: Text(
+                                "購入グラム数: ${itemDetails!['purchasedGrams']}g")),
+                      ],
+                    ),
+                    Row(
+                      children: [
+                        Expanded(
+                          child: Text("産地: ${itemDetails!['origin'] ?? ''}"),
+                        ),
+                        Expanded(
+                            child:
+                                Text("農園名: ${itemDetails!['farmName'] ?? ''}")),
+                      ],
+                    ),
+
+                    Text("説明: ${itemDetails!['description'] ?? ''}"),
+                    Text("ストーリー: ${itemDetails!['story'] ?? ''}"),
                   ],
                 ),
-              ],
+              ),
             ),
+            Text('最近のアクティビティ', style: AppStyles.headingStyle,), 
+            FutureBuilder<List<Map<String, dynamic>>>(
+              future: dbHelper.queryRecentActivities(itemDetails!['id'],),
+              builder: (context, snapshot) {
+                if (snapshot.connectionState == ConnectionState.waiting) {
+                  return CircularProgressIndicator();
+                } else if (snapshot.hasError) {
+                  return Text('Error: ${snapshot.error}');
+                } else if (!snapshot.hasData || snapshot.data!.isEmpty) {
+                  return SizedBox.shrink();
+                } else {
+                  final activities = snapshot.data!;
+                  return ListView.builder(
+                    shrinkWrap: true,
+                    physics: NeverScrollableScrollPhysics(),
+                    itemCount: activities.length,
+                    itemBuilder: (context, index) {
+                      final activity = activities[index];
+                      return ListTile(
+                        title: Text(activity['overallMemo']),
+                        subtitle: Text(activity['overallScore'].toString()),
+                      );
+                    },
+                  );
+                }
+              },
+            )
           ],
         ),
       ),
