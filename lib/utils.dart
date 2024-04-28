@@ -1,5 +1,3 @@
-import 'dart:io';
-import 'package:flutter/material.dart';
 
 class Utils {
   final Map<String, String> japaneseTitles = {
@@ -19,6 +17,10 @@ class Utils {
     'roastLevel': '焙煎度',
     'body': 'ボディ',
     'acidity': '酸味',
+    'aroma': '香り', 
+    'bitterness': '苦味',
+    'sweetness': '甘味',
+    'overall': '総合',
     'story': 'ストーリー',
     'usedBeans': '使用した豆',
     'deviceUsed': '使用器具',
@@ -66,6 +68,15 @@ class Utils {
     'Low',
     'Medium',
     'High',
+  ];
+
+  final List<String> usedDevices = [
+    'ドリップ',
+    'エアロプレス',
+    'フレンチプレス',
+    'サイフォン',
+    'エスプレッソマシン',
+    'その他',
   ];
 
 

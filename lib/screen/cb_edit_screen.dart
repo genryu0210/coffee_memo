@@ -251,47 +251,14 @@ class _EditScreenState extends State<EditScreen> {
                   Utils().japaneseTitles['body']!, // または他の方法でタイトルを取得
                   style: TextStyle(fontSize: 16),
                 ),
-                SizedBox(
-                  height: 40,
-                  child: Row(
-                    children: List.generate(
-                      3,
-                      (index) {
-                        int level = index + 1;
-                        Widget button = Expanded(
-                          flex: 1,
-                          child: Container(
-                            decoration: BoxDecoration(
-                              border: Border.all(
-                                color: bodyIndex == level
-                                    ? Theme.of(context).primaryColor
-                                    : Colors.black,
-                                width: bodyIndex == level ? 2 : 1,
-                              ),
-                              borderRadius: BorderRadius.circular(15),
-                            ),
-                            child: TextButton(
-                              child: Text(
-                                Utils().bodyLevels[index],
-                                style: AppStyles.normalText,
-                              ),
-                              onPressed: () {
-                                setState(() {
-                                  bodyIndex = level;
-                                });
-                              },
-                            ),
-                          ),
-                        );
-                        if (index == 1) {
-                          return button;
-                        }
-                        return button;
-                      },
-                    )
-                      ..insert(2, SizedBox(width: 8))
-                      ..insert(1, SizedBox(width: 8)),
-                  ),
+                SegmentedLevelSelector(
+                  selectedIndex: bodyIndex,
+                  segmentedList: Utils().bodyLevels,
+                  onPressed: (index) {
+                    setState(() {
+                      bodyIndex = index;
+                    });
+                  },
                 )
               ],
             ),
@@ -303,42 +270,14 @@ class _EditScreenState extends State<EditScreen> {
                   Utils().japaneseTitles['acidity']!, // または他の方法でタイトルを取得
                   style: TextStyle(fontSize: 16),
                 ),
-                SizedBox(
-                  height: 40,
-                  child: Row(
-                    children: List.generate(
-                      3,
-                      (index) {
-                        int level = index + 1;
-                        return Expanded(
-                          child: Container(
-                            decoration: BoxDecoration(
-                              border: Border.all(
-                                color: acidityIndex == level
-                                    ? Theme.of(context).primaryColor
-                                    : Colors.black,
-                                width: acidityIndex == level ? 2 : 1,
-                              ),
-                              borderRadius: BorderRadius.circular(15),
-                            ),
-                            child: TextButton(
-                              child: Text(
-                                Utils().acidityLevels[index],
-                                style: AppStyles.normalText,
-                              ),
-                              onPressed: () {
-                                setState(() {
-                                  acidityIndex = level;
-                                });
-                              },
-                            ),
-                          ),
-                        );
-                      },
-                    )
-                      ..insert(2, SizedBox(width: 8))
-                      ..insert(1, SizedBox(width: 8)),
-                  ),
+                SegmentedLevelSelector(
+                  selectedIndex: acidityIndex,
+                  segmentedList: Utils().acidityLevels,
+                  onPressed: (index) {
+                    setState(() {
+                      acidityIndex = index;
+                    });
+                  },
                 )
               ],
             ),

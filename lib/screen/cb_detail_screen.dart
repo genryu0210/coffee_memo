@@ -1,13 +1,10 @@
 import 'dart:io';
-import 'dart:ui';
-
 import 'package:coffee_memo/screen/cb_edit_screen.dart';
 import 'package:coffee_memo/styles.dart';
 import 'package:coffee_memo/widgets.dart';
 import 'package:flutter/material.dart';
 import 'package:coffee_memo/db/database_helper.dart';
 import 'package:coffee_memo/utils.dart';
-import 'package:flutter/widgets.dart';
 import 'package:intl/intl.dart';
 
 class DetailScreen extends StatefulWidget {
@@ -108,7 +105,6 @@ class _DetailScreenState extends State<DetailScreen> {
 
   @override
   Widget build(BuildContext context) {
-    double screenWidth = MediaQuery.of(context).size.width;
     if (itemDetails == null) {
       return Scaffold(
         appBar: AppBar(),
@@ -175,54 +171,91 @@ class _DetailScreenState extends State<DetailScreen> {
                   children: [
                     // Text("購入店: ${itemDetails!['store']}"),
                     Text(
-                        "購入日: ${DateFormat('yyyy/MM/dd').format(DateTime.parse(itemDetails!['purchaseDate']))}", maxLines: 1,style: AppStyles.cardText,),
+                      "購入日: ${DateFormat('yyyy/MM/dd').format(DateTime.parse(itemDetails!['purchaseDate']))}",
+                      maxLines: 1,
+                      style: AppStyles.cardText,
+                    ),
                     Row(
                       children: [
                         Expanded(
                           child: Text(
-                              "焙煎度: ${itemDetails!['roastLevel'] != -1 ? Utils().roastLevels[itemDetails!['roastLevel']] : ''}", maxLines: 1,style: AppStyles.cardText,),
+                            "焙煎度: ${itemDetails!['roastLevel'] != -1 ? Utils().roastLevels[itemDetails!['roastLevel']] : ''}",
+                            maxLines: 1,
+                            style: AppStyles.cardText,
+                          ),
                         ),
                         Expanded(
-                            child:
-                                Text("精製方法: ${itemDetails!['process'] ?? ''}", maxLines: 1,style: AppStyles.cardText,)),
+                            child: Text(
+                          "精製方法: ${itemDetails!['process'] ?? ''}",
+                          maxLines: 1,
+                          style: AppStyles.cardText,
+                        )),
                       ],
                     ),
                     Row(
                       children: [
                         Expanded(
                             child: Text(
-                                "ボディ: ${itemDetails!['body'] != -1 ? Utils().bodyLevels[itemDetails!['body']] : ''}", maxLines: 1,style: AppStyles.cardText,)),
+                          "ボディ: ${itemDetails!['body'] != -1 ? Utils().bodyLevels[itemDetails!['body']] : ''}",
+                          maxLines: 1,
+                          style: AppStyles.cardText,
+                        )),
                         Expanded(
                             child: Text(
-                                "酸味: ${itemDetails!['acidity'] != -1 ? Utils().acidityLevels[itemDetails!['acidity']] : ''}", maxLines: 1,style: AppStyles.cardText,)),
+                          "酸味: ${itemDetails!['acidity'] != -1 ? Utils().acidityLevels[itemDetails!['acidity']] : ''}",
+                          maxLines: 1,
+                          style: AppStyles.cardText,
+                        )),
                       ],
                     ),
                     Row(
                       children: [
                         Expanded(
-                          child: Text("価格: ${itemDetails!['price']}円", maxLines: 1,style: AppStyles.cardText,),
+                          child: Text(
+                            "価格: ${itemDetails!['price']}円",
+                            maxLines: 1,
+                            style: AppStyles.cardText,
+                          ),
                         ),
                         Expanded(
                             child: Text(
-                                "購入グラム数: ${itemDetails!['purchasedGrams']}g", maxLines: 1,style: AppStyles.cardText,)),
+                          "購入グラム数: ${itemDetails!['purchasedGrams']}g",
+                          maxLines: 1,
+                          style: AppStyles.cardText,
+                        )),
                       ],
                     ),
                     Row(
                       children: [
                         Expanded(
-                          child: Text("産地: ${itemDetails!['origin'] ?? ''}", maxLines: 1,style: AppStyles.cardText,),
+                          child: Text(
+                            "産地: ${itemDetails!['origin'] ?? ''}",
+                            maxLines: 1,
+                            style: AppStyles.cardText,
+                          ),
                         ),
                         Expanded(
-                            child:
-                                Text("農園名: ${itemDetails!['farmName'] ?? ''}", maxLines: 1,style: AppStyles.cardText,)),
+                            child: Text(
+                          "農園名: ${itemDetails!['farmName'] ?? ''}",
+                          maxLines: 1,
+                          style: AppStyles.cardText,
+                        )),
                       ],
                     ),
                     Visibility(
-                      child: Text("ストーリー: ${itemDetails!['story'] ?? ''}", maxLines: 1,style: AppStyles.cardText,),
+                      child: Text(
+                        "ストーリー: ${itemDetails!['story'] ?? ''}",
+                        maxLines: 1,
+                        style: AppStyles.cardText,
+                      ),
                       visible: itemDetails!['story'] == '' ? false : true,
                     ),
                     Visibility(
-                      child: Text("説明: ${itemDetails!['description'] ?? ''}", maxLines: 1,style: AppStyles.cardText,),
+                      child: Text(
+                        "説明: ${itemDetails!['description'] ?? ''}",
+                        maxLines: 1,
+                        style: AppStyles.cardText,
+                      ),
                       visible: itemDetails!['story'] == '' ? false : true,
                     ),
                   ],
@@ -254,27 +287,54 @@ class _DetailScreenState extends State<DetailScreen> {
                     itemBuilder: (context, index) {
                       final activity = activities[index];
                       return Card(
-                        
                         child: Padding(
                           padding: const EdgeInsets.all(8.0),
                           child: Row(
-                              crossAxisAlignment: CrossAxisAlignment.start,
+                            crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
                               BeansImage(
                                   storedImage: activity['imagePath'].isNotEmpty
                                       ? File(activity['imagePath'])
                                       : null,
-                                      widgetSize: 100,
+                                  widgetSize: 100,
                                   onTap: null),
                               Padding(
                                 padding: const EdgeInsets.only(left: 8.0),
                                 child: Column(
                                   crossAxisAlignment: CrossAxisAlignment.start,
                                   children: [
-                                    Text('抽出日: ${activity['brewDate']}', maxLines: 1,style: AppStyles.cardText,),
-                                    Text('使用器具: ${activity['deviceUsed']}', maxLines: 1,style: AppStyles.cardText,),
-                                    Text('総合点数: ${activity['overallScore']}', maxLines: 1,style: AppStyles.cardText,),
-                                    Text('総合メモ: ${activity['overallMemo']}', maxLines: 3,style: AppStyles.cardText,),
+                                    Text(
+                                      '抽出日: ${DateFormat('yyyy/MM/dd hh:mm').format(DateTime.parse(activity['brewDate']))}',
+                                      maxLines: 1,
+                                      style: AppStyles.cardText,
+                                    ),
+                                    Text(
+                                      '使用器具: ${activity['deviceUsed']}',
+                                      maxLines: 1,
+                                      style: AppStyles.cardText,
+                                    ),
+                                    Row(
+                                      children: [
+                                        Text(
+                                          '総合点数: ',
+                                          maxLines: 1,
+                                          style: AppStyles.cardText,
+                                        ),
+                                        Icon(Icons.local_cafe,
+                                            color: Colors.amber, 
+                                            size: 18,),
+                                        Text(
+                                          '✖️ ${activity['overallScore'] == -1? 0:activity['overallScore']}',
+                                          maxLines: 1,
+                                          style: AppStyles.cardText,
+                                        ),
+                                      ],
+                                    ),
+                                    Text(
+                                      '総合メモ: ${activity['overallMemo']}',
+                                      maxLines: 3,
+                                      style: AppStyles.cardText,
+                                    ),
                                   ],
                                 ),
                               ),

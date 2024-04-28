@@ -229,7 +229,6 @@ class _DetailScreenState extends State<DetailScreen> {
 
   @override
   Widget build(BuildContext context) {
-    double screenWidth = MediaQuery.of(context).size.width;
     if (itemDetails == null) {
       return Scaffold(
         appBar: AppBar(),

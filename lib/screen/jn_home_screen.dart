@@ -3,6 +3,7 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:coffee_memo/db/database_helper.dart';
 import 'package:coffee_memo/screen/jn_insert_screen.dart';
+import 'package:intl/intl.dart';
 import 'jn_detail_screen.dart';
 
 class JournalHomeScreen extends StatefulWidget {
@@ -53,7 +54,7 @@ class _JournalHomeScreenState extends State<JournalHomeScreen> {
                       child: Card(
                         margin: EdgeInsets.zero,
                         shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(15.0), // 角の丸み
+                          borderRadius: BorderRadius.circular(15.0),
                           side: BorderSide(width: 0.5),
                         ),
                         clipBehavior: Clip.antiAlias,
@@ -83,11 +84,24 @@ class _JournalHomeScreenState extends State<JournalHomeScreen> {
                     ),
                     Padding(
                       padding: const EdgeInsets.only(left: 8.0),
-                      child: Text(
-                        _items[index]['deviceUsed'],
-                        style: TextStyle(
-                          fontSize: 16,
-                        ),
+                      child: Column(
+                        mainAxisAlignment: MainAxisAlignment.end,
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            _items[index]['usedBeans'].toString(),
+                            style: TextStyle(
+                              fontSize: 20,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                          Text(
+                            DateFormat('hh:mm yyyy/MM/dd').format(DateTime.parse(_items[index]['brewDate'])),
+                            style: TextStyle(
+                              fontSize: 16,
+                            ),
+                          ),
+                        ],
                       ),
                     ),
                   ],

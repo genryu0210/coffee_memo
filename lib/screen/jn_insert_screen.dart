@@ -2,10 +2,7 @@ import 'package:coffee_memo/utils.dart';
 import 'package:coffee_memo/widgets.dart';
 import 'package:flutter/material.dart';
 import 'package:coffee_memo/db/database_helper.dart';
-import 'package:flutter/widgets.dart';
 import 'dart:io';
-import 'package:image_picker/image_picker.dart';
-import 'package:intl/intl.dart';
 
 class InsertScreen extends StatefulWidget {
   @override
@@ -16,13 +13,13 @@ class _InsertScreenState extends State<InsertScreen> {
   final dbHelper = DatabaseHelper.instance;
   final table = 'JournalTable';
   Map<String, TextEditingController> controllers = {};
-  File? _storedImage;
-  List<DropdownMenuItem<String>> _coffeeBeansDropdown = [];
-  String? _selectedBean;
   Map<String, dynamic> _beanDetails = {};
-
   final Map japaneseTitles = Utils().japaneseTitles;
+  List<DropdownMenuItem<String>> _coffeeBeansDropdown = [];
+  File? _selectedImage;
+  String? _selectedBean;
   DateTime selectedDate = DateTime.now();
+
   Map<String, int> tasteIndexMap = {
     'overall': -1,
     'body': -1,
@@ -40,11 +37,8 @@ class _InsertScreenState extends State<InsertScreen> {
   }
 
   void _initControllers() {
-    final columns = dbHelper.journalColumns
-        .where((column) => column != 'id' && column != 'imagePath')
-        .toList();
-
-    // 各カラムに対してTextEditingControllerを初期化
+    final columns =
+        dbHelper.journalColumns.where((column) => column != 'id').toList();
     columns.forEach((column) {
       controllers[column] = TextEditingController();
     });
@@ -66,8 +60,8 @@ class _InsertScreenState extends State<InsertScreen> {
     });
   }
 
-  Future<void> _addCoffeeBeanWithImage() async {
-    String imagePath = _storedImage?.path ?? '';
+  Future<void> _addJournalWithImage() async {
+    String imagePath = _selectedImage?.path ?? '';
     Map<String, dynamic> row = {
       for (var entry in controllers.entries) entry.key: entry.value.text,
       'usedBeans': _selectedBean,
@@ -78,21 +72,25 @@ class _InsertScreenState extends State<InsertScreen> {
       'bitternessScore': tasteIndexMap['bitterness'],
       'bodyScore': tasteIndexMap['body'],
       'sweetnessScore': tasteIndexMap['sweetness'],
-      'brewDate': DateFormat('yyyy-MM-dd').format(selectedDate),
+      'brewDate': selectedDate.toString(),
       'updateDate': DateTime.now().toString()
     };
-    await dbHelper.insert(table, row);
+    try {
+      await dbHelper.insert(table, row);
+    } catch (e) {
+      print('Error inserting data: $e');
+    }
+    // await dbHelper.insert(table, row);
 
     Navigator.of(context).pop(); // データ挿入後に画面を閉じる
   }
 
   Widget _coffeeBeanSelector() {
     return DropdownButton<String>(
+      borderRadius: BorderRadius.all(Radius.circular(15)),
       value: _selectedBean,
       onChanged: (newValue) {
-        setState(() {
-          _onCoffeeBeanSelected(newValue);
-        });
+        _onCoffeeBeanSelected(newValue);
       },
       items: _coffeeBeansDropdown,
     );
@@ -115,46 +113,6 @@ class _InsertScreenState extends State<InsertScreen> {
     });
   }
 
-  Future<void> _selectImage() async {
-    // ボトムシートを表示する関数
-    showModalBottomSheet(
-      context: context,
-      builder: (BuildContext context) {
-        return SafeArea(
-          child: Wrap(
-            children: <Widget>[
-              ListTile(
-                  leading: Icon(Icons.photo_camera),
-                  title: Text('カメラで撮影'),
-                  onTap: () {
-                    Navigator.of(context).pop();
-                    _getImage(ImageSource.camera);
-                  }),
-              ListTile(
-                leading: Icon(Icons.photo_library),
-                title: Text('ギャラリーから選択'),
-                onTap: () {
-                  Navigator.of(context).pop();
-                  _getImage(ImageSource.gallery);
-                },
-              ),
-            ],
-          ),
-        );
-      },
-    );
-  }
-
-  Future<void> _getImage(ImageSource source) async {
-    final pickedFile =
-        await ImagePicker().pickImage(source: source, maxWidth: 600);
-    if (pickedFile != null) {
-      setState(() {
-        _storedImage = File(pickedFile.path);
-      });
-    }
-  }
-
   Future<void> _selectDate(BuildContext context) async {
     final DateTime? picked = await showDatePicker(
       context: context,
@@ -169,19 +127,6 @@ class _InsertScreenState extends State<InsertScreen> {
         selectedDate = picked;
       });
     }
-  }
-
-  Widget customTextField(String key, double value) {
-    return SizedBox(
-      width: value,
-      child: TextField(
-        controller: controllers[key],
-        decoration: InputDecoration(
-          labelText: japaneseTitles[key], // ラベルの取得
-        ),
-        // keyboardType: _getKeyboardType(entry.key), // キーボードタイプの指定
-      ),
-    );
   }
 
   Widget tasteLevel(String taste) {
@@ -223,50 +168,29 @@ class _InsertScreenState extends State<InsertScreen> {
   Widget tasteScores(String taste) {
     return Column(
       children: [
-        customTextField('${taste}Memo', 400),
-        SizedBox(height: 8.0),
-        tasteLevel(taste),
-      ],
-    );
-  }
-
-  Widget coffeeBeanDetailsCard(Map<String, dynamic>? beanDetails) {
-    if (beanDetails == null || beanDetails.isEmpty) return SizedBox();
-    return Visibility(
-      visible: beanDetails.isNotEmpty,
-      child: Card(
-        margin: EdgeInsets.all(8),
-        child: Padding(
-          padding: EdgeInsets.all(8),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text("購入店: ${beanDetails['store']}"),
-              Text(
-                  "購入日: ${DateFormat('yyyy-MM-dd').format(DateTime.parse(beanDetails['purchaseDate']))}"),
-              Row(
-                children: [
-                  Expanded(child: Text("焙煎度: ${beanDetails['roastLevel']}")),
-                  Expanded(child: Text("精製方法: ${beanDetails['process']}")),
-                ],
-              ),
-              Row(
-                children: [
-                  Expanded(child: Text("ボディ: ${beanDetails['body']}")),
-                  Expanded(child: Text("酸味: ${beanDetails['acidity']}")),
-                ],
-              ),
-              // 他の必要な情報もここに追加
-            ],
-          ),
+        CustomTextField(
+          controller: controllers['${taste}Memo']!,
+          hintText: 'ここに${japaneseTitles[taste]}の感想を記入してください',
+          itemKey: '${taste}Memo',
         ),
-      ),
+        SizedBox(height: 8.0),
+        TasteLevelWidget(
+          taste: taste,
+          currentLevel: tasteIndexMap[taste]!,
+          onLevelChanged: (level) {
+            setState(() {
+              tasteIndexMap[taste] = level;
+            });
+          },
+        ),
+      ],
     );
   }
 
   @override
   Widget build(BuildContext context) {
     double screenWidth = MediaQuery.of(context).size.width;
+
     return Scaffold(
       appBar: AppBar(),
       body: SingleChildScrollView(
@@ -279,10 +203,16 @@ class _InsertScreenState extends State<InsertScreen> {
               children: [
                 Padding(
                   padding: EdgeInsets.only(left: 8.0, right: 8.0),
-                  child: BeansImage( storedImage: _storedImage,onTap: _selectImage),
+                  child: ImagePickerWidget(
+                    onImagePicked: (image) {
+                      setState(() {
+                        _selectedImage = image;
+                      });
+                    },
+                  ),
                 ),
                 Container(
-                  padding: EdgeInsets.only(left: 16),
+                  padding: EdgeInsets.only(left: 8),
                 ),
                 Expanded(
                   child: Column(
@@ -337,57 +267,50 @@ class _InsertScreenState extends State<InsertScreen> {
                 ),
               ],
             ),
-            coffeeBeanDetailsCard(_beanDetails),
-            Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: <Widget>[
-                SizedBox(height: 8),
-                Text(japaneseTitles['brewMethods'],
-                    style: TextStyle(fontSize: 16)),
-                SizedBox(height: 8),
-                TextFormField(
-                  controller: controllers['brewMethods'],
-                  decoration: InputDecoration(
-                    hintText: "ここに抽出方法を記入してください",
-                    border: OutlineInputBorder(
-                      borderRadius: BorderRadius.all(
-                        Radius.circular(15),
-                      ),
-                    ),
-                  ),
-                  keyboardType: TextInputType.multiline,
-                  maxLines: null,
-                  autofocus: false,
-                ),
-              ],
+            CoffeeBeanDetailsCard(beanDetails: _beanDetails),
+            SizedBox(height: 8),
+            Text(japaneseTitles['brewMethods'], style: TextStyle(fontSize: 16)),
+            TextFormField(
+              controller: controllers['brewMethods'],
+              decoration: InputDecoration(
+                  hintText: "ここに抽出方法を記入してください",
+                  border: OutlineInputBorder(
+                      borderRadius: BorderRadius.all(Radius.circular(15)))),
+              keyboardType: TextInputType.multiline,
+              maxLines: null,
+              autofocus: false,
             ),
+            SizedBox(height: 8),
             tasteScores('overall'),
+            SizedBox(height: 8),
             tasteScores('acidity'),
+            SizedBox(height: 8),
             tasteScores('aroma'),
+            SizedBox(height: 8),
             tasteScores('bitterness'),
+            SizedBox(height: 8),
             tasteScores('body'),
+            SizedBox(height: 8),
             tasteScores('sweetness'),
-            Row(
-              children: [
-                Expanded(child: Container()),
-                Padding(
-                  padding: const EdgeInsets.only(top: 16),
-                  child: ElevatedButton(
-                    onPressed: _addCoffeeBeanWithImage,
-                    style: ButtonStyle(
-                      iconColor: MaterialStateProperty.resolveWith(
-                        (Set states) {
-                          return Theme.of(context).primaryColor;
-                        },
-                      ),
-                    ),
-                    child: Text('追加'),
-                  ),
-                ),
-              ],
-            ),
           ],
         ),
+      ),
+      floatingActionButtonLocation: FloatingActionButtonLocation.centerFloat,
+      floatingActionButton: FloatingActionButton.extended(
+        backgroundColor: tasteIndexMap['overall'] == -1
+            ? Colors.grey
+            : Theme.of(context).primaryColor,
+        label: Container(
+          width: screenWidth * 0.8,
+          child: Center(
+            child: Text(
+              '保存',
+              style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+            ),
+          ),
+        ),
+        onPressed:
+            tasteIndexMap['overall'] == -1 ? () {} : _addJournalWithImage,
       ),
     );
   }

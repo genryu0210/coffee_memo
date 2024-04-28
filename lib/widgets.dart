@@ -316,9 +316,14 @@ class BeansImage extends StatelessWidget {
   final VoidCallback? onTap;
   final double? widgetSize;
 
-  const BeansImage({super.key,required this.storedImage,required this.onTap, this.widgetSize = 150});
+  const BeansImage(
+      {super.key,
+      required this.storedImage,
+      required this.onTap,
+      this.widgetSize = 150});
 
-  static Widget beansImage(File? _storedImage, VoidCallback? onTap, double? widgetSize) {
+  static Widget beansImage(
+      File? _storedImage, VoidCallback? onTap, double? widgetSize) {
     Image imageFile = _storedImage != null
         ? Image.file(
             _storedImage,
@@ -351,5 +356,106 @@ class BeansImage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return beansImage(storedImage, onTap, widgetSize);
+  }
+}
+
+class CoffeeBeanDetailsCard extends StatelessWidget {
+  const CoffeeBeanDetailsCard({
+    super.key,
+    required this.beanDetails,
+  });
+
+  final Map<String, dynamic> beanDetails;
+
+  @override
+  Widget build(BuildContext context) {
+    if (beanDetails.isEmpty) return SizedBox();
+    return Visibility(
+      visible: beanDetails.isNotEmpty,
+      child: Card(
+        margin: EdgeInsets.all(8),
+        child: Padding(
+          padding: EdgeInsets.all(8),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text("購入店: ${beanDetails['store']}"),
+              Text(
+                  "購入日: ${DateFormat('yyyy-MM-dd').format(DateTime.parse(beanDetails['purchaseDate']))}"),
+              Row(
+                children: [
+                  Expanded(child: Text("焙煎度: ${beanDetails['roastLevel']}")),
+                  Expanded(child: Text("精製方法: ${beanDetails['process']}")),
+                ],
+              ),
+              Row(
+                children: [
+                  Expanded(child: Text("ボディ: ${beanDetails['body']}")),
+                  Expanded(child: Text("酸味: ${beanDetails['acidity']}")),
+                ],
+              ),
+              // 他の必要な情報もここに追加
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class SegmentedLevelSelector extends StatefulWidget {
+  const SegmentedLevelSelector({
+    super.key,
+    required this.segmentedList,
+    required this.selectedIndex,
+    required this.onPressed,
+  });
+  final List<String> segmentedList;
+  final int selectedIndex;
+  final void Function(int) onPressed;
+
+  @override
+  State<SegmentedLevelSelector> createState() => _SegmentedLevelSelectorState();
+}
+
+class _SegmentedLevelSelectorState extends State<SegmentedLevelSelector> {
+  @override
+  Widget build(BuildContext context) {
+    List<Widget> Listgenerator = List.generate(
+          widget.segmentedList.length,
+          (index) {
+            return Expanded(
+              child: Container(
+                decoration: BoxDecoration(
+                  border: Border.all(
+                    color: widget.selectedIndex == index
+                        ? Theme.of(context).primaryColor
+                        : Colors.black,
+                    width: widget.selectedIndex == index ? 2 : 1,
+                  ),
+                  borderRadius: BorderRadius.circular(15),
+                ),
+                child: TextButton(
+                  child: Text(
+                    widget.segmentedList[index],
+                    style: AppStyles.normalText,
+                  ),
+                  onPressed: () => widget.onPressed(index),
+                ),
+              ),
+            );
+          },
+        );
+
+
+        for (int i = 0; i + 1 < widget.segmentedList.length; i++){
+          Listgenerator.insert(2 * i+1, SizedBox(width: 4));
+        }
+    return SizedBox(
+      height: 40,
+      child: Row(
+        children: Listgenerator
+      ),
+    );
   }
 }
