@@ -1,5 +1,3 @@
-import 'dart:ffi';
-
 import 'package:coffee_memo/utils.dart';
 import 'package:coffee_memo/widgets.dart';
 import 'package:flutter/material.dart';

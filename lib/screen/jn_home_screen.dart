@@ -15,6 +15,7 @@ class _JournalHomeScreenState extends State<JournalHomeScreen> {
   final dbHelper = DatabaseHelper.instance;
   final table = 'JournalTable';
  late List<Map<String, dynamic>> _items;
+ List coffeeBeansDetails = [];
 
   @override
   void initState() {
@@ -24,10 +25,21 @@ class _JournalHomeScreenState extends State<JournalHomeScreen> {
 
   void _refreshItems() async {
     final data = await dbHelper.queryAllRows(table);
+    _fetchCoffeeBeans();
+
     setState(() {
       _items = data.reversed.toList();
 
     });
+  }
+  void _fetchCoffeeBeans() async {
+    final coffeeBeans = await dbHelper.queryAllRows('CoffeeBeansTable');
+    final coffeeBeanIds = coffeeBeans.map((coffeeBean) => coffeeBean['id']).toList();
+    final coffeeBeanNames = coffeeBeans.map((coffeeBean) => coffeeBean['name']).toList();
+    setState(() {
+    coffeeBeansDetails = coffeeBeans;
+    });
+    // Use coffeeBeanIds and coffeeBeanNames as needed
   }
 
   @override
@@ -89,7 +101,7 @@ class _JournalHomeScreenState extends State<JournalHomeScreen> {
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           Text(
-                            _items[index]['usedBeans'].toString(),
+                            coffeeBeansDetails[_items[index]['usedBeans']]['name'].toString(),
                             style: TextStyle(
                               fontSize: 20,
                               fontWeight: FontWeight.bold,
